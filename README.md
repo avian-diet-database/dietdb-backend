@@ -1,16 +1,16 @@
 # Backend
 
-#Available scripts
+# Available scripts
 
-##npm run devJS
+## npm run devJS
 
 Start a node development server which watches the dist folder for changes. 
 
-##npm run devTS
+## npm run devTS
 
 Start a node development server which watches the src folder for changes.
 
-##npm run startJS
+## npm run startJS
 
 Start a node server from dist/index.js without watching for changes. 
 
