@@ -1,3 +1,3 @@
 import 'reflect-metadata'
 
-console.log('hello all')
+console.log('hello world')
