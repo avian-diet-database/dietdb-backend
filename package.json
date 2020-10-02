@@ -20,6 +20,7 @@
     "graphql": "^15.3.0",
     "mysql2": "^2.1.0",
     "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.0.0",
     "typeorm": "^0.2.25"
   },
   "devDependencies": {
