@@ -1,14 +1,11 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, PrimaryColumn } from "typeorm";
 
 @ObjectType()
 @Entity()
 export class AvianDiet extends BaseEntity {
-    @PrimaryGeneratedColumn("increment")
-    id: number;
-
     @Field()
-    @Column({ nullable: true })
+    @PrimaryColumn()
     common_name: string;
 
     @Field()
