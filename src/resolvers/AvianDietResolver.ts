@@ -1,4 +1,3 @@
-import { AvianDiet } from "../entities/AvianDiet";
 import {  Args, ArgsType, Field, Int, ObjectType, Query, Resolver } from "type-graphql";
 import { createQueryBuilder } from "typeorm";
 
@@ -56,8 +55,8 @@ export class AvianDietResolver {
         + (!dietType || dietType === "unspecified" ? ", SUM(diet.Unspecified) as unspecified" : ""))
         .from(subQuery => {
             return subQuery
-                .select("*, IF(diet_type = 'Items', SUM(fraction_diet), null) as 'Items', IF(diet_type = 'Occurrence', SUM(fraction_diet), null) as 'Occurrence', IF(diet_type = 'Wt_or_Vol', SUM(fraction_diet), null) as 'Wt_or_Vol', if(diet_type = 'Unspecified', SUM(fraction_diet), null) as 'Unspecified'")
-                .from(AvianDiet, "diet")
+                .select(preyLevel + ", source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, IF(diet_type = 'Items', SUM(fraction_diet), null) as 'Items', IF(diet_type = 'Occurrence', SUM(fraction_diet), null) as 'Occurrence', IF(diet_type = 'Wt_or_Vol', SUM(fraction_diet), null) as 'Wt_or_Vol', if(diet_type = 'Unspecified', SUM(fraction_diet), null) as 'Unspecified'")
+                .from("avian_diet", "diet")
                 .where("(common_name = :name OR scientific_name = :name) AND :level != ''"
                 + (startYear ? " AND observation_year_begin >= :start" : "")
                 + (endYear ? " AND observation_year_end <= :end" : "")
