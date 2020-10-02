@@ -13,10 +13,10 @@ class GetPredatorOfArgs {
     @Field({ nullable: true })
     dietType?: string;
 
-    @Field(type => Int, { nullable: true })
+    @Field(() => Int, { nullable: true })
     startYear?: number;
 
-    @Field(type => Int, { nullable: true })
+    @Field(() => Int, { nullable: true })
     endYear?: number;
 
     @Field({ nullable: true })
