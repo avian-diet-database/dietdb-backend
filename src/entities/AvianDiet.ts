@@ -1,11 +1,15 @@
 import { Field, Int, ObjectType } from "type-graphql";
-import { BaseEntity, Column, Entity, PrimaryColumn } from "typeorm";
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @ObjectType()
 @Entity()
 export class AvianDiet extends BaseEntity {
     @Field()
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
+    unique_id: number;
+
+    @Field()
+    @Column()
     common_name: string;
 
     @Field()
@@ -37,7 +41,7 @@ export class AvianDiet extends BaseEntity {
     altitude_mean_m: string;
 
     @Field()
-    @Column({ nullable: true })
+    @Column()
     location_region: string;
 
     @Column({ nullable: true })
@@ -70,7 +74,7 @@ export class AvianDiet extends BaseEntity {
     analysis_number: string;
 
     @Field()
-    @Column({ nullable: true })
+    @Column()
     prey_kingdom: string;
 
     @Field()
@@ -124,7 +128,7 @@ export class AvianDiet extends BaseEntity {
     fraction_diet: string;
 
     @Field()
-    @Column({ nullable: true })
+    @Column()
     diet_type: string;
 
     @Column({ nullable: true })
@@ -139,13 +143,13 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     study_type: string;
 
-    @Column({ nullable: true })
+    @Column({ length: 400, nullable: true })
     notes: string;
 
     @Column({ nullable: true })
     entered_by: string;
 
     @Field()
-    @Column({ nullable: true })
+    @Column()
     source: string;
 }
