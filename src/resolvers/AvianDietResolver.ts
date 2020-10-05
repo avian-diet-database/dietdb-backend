@@ -48,7 +48,7 @@ export class Prey {
 export class AvianDietResolver {
     @Query(() => [Prey])
     async getPreyOf(@Args() {predatorName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        const prey =  await createQueryBuilder()
+        return  await createQueryBuilder()
         .select("diet." + preyLevel + " as taxon"
         + (!dietType || dietType === "items" ? ", SUM(diet.Items) as items" : "")
         + (!dietType || dietType === "occurence" ? ", SUM(diet.Occurrence) as occurence" : "")
@@ -69,7 +69,5 @@ export class AvianDietResolver {
         .where("diet." + preyLevel + " IS NOT NULL")
         .groupBy("diet." + preyLevel + ", diet.source, diet.observation_year_begin, diet.observation_month_begin, diet.observation_season, diet.bird_sample_size, diet.habitat_type, diet.location_region, diet.item_sample_size")
         .getRawMany();
-        console.log(prey.length);
-        return prey;
     }
 }
