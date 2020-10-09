@@ -1,4 +1,4 @@
-import {  Args, ArgsType, Field, Int, ObjectType, Query, Resolver } from "type-graphql";
+import { Args, ArgsType, Field, Int, ObjectType, Query, Resolver } from "type-graphql";
 import { createQueryBuilder } from "typeorm";
 
 @ArgsType()
@@ -12,10 +12,10 @@ class GetPredatorOfArgs {
     @Field({ nullable: true })
     dietType?: string;
 
-    @Field(() => Int, { nullable: true })
+    @Field({ nullable: true })
     startYear?: number;
 
-    @Field(() => Int, { nullable: true })
+    @Field({ nullable: true })
     endYear?: number;
 
     @Field({ nullable: true })
