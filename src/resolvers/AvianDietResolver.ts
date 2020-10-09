@@ -71,7 +71,7 @@ export class AvianDietResolver {
                         IF(diet_type = "Unspecified", fraction_diet, NULL) as Unspecified
 		            FROM avian_diet
 		            WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}")${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}${region !== undefined ? " AND location_region = \"" + region + "\"": ""}) final0
-		        GROUP BY source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxonUnid, diet_type) final1,
+		        GROUP BY source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type) final1,
 		    (SELECT diet_type, COUNT(*) AS n
 		FROM
 			(SELECT DISTINCT *
