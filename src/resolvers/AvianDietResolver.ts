@@ -14,10 +14,10 @@ class GetPredatorOfArgs {
     dietType?: string;
 
     @Field({ nullable: true })
-    startYear?: number;
+    startYear?: string;
 
     @Field({ nullable: true })
-    endYear?: number;
+    endYear?: string;
 
     @Field({ nullable: true })
     season?: string;
@@ -70,7 +70,7 @@ export class AvianDietResolver {
 			            IF(diet_type = "Occurrence", fraction_diet, NULL) as Occurrence,
                         IF(diet_type = "Unspecified", fraction_diet, NULL) as Unspecified
 		            FROM avian_diet
-		            WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}")${startYear !== undefined ? " AND observation_start_year <= \"" + startYear + "\"" : ""}${endYear !== undefined ? " AND observation_end_year >= \"" + endYear + "\"": ""}${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}${region !== undefined ? " AND location_region = \"" + region + "\"": ""}) final0
+		            WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}")${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}${region !== undefined ? " AND location_region = \"" + region + "\"": ""}) final0
 		        GROUP BY source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxonUnid, diet_type) final1,
 		    (SELECT diet_type, COUNT(*) AS n
 		FROM
@@ -80,7 +80,7 @@ export class AvianDietResolver {
                     FROM
 						(SELECT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type
                         FROM avian_diet
-                        WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}")${startYear !== undefined ? " AND observation_start_year <= \"" + startYear + "\"" : ""}${endYear !== undefined ? " AND observation_end_year >= \"" + endYear + "\"": ""}${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}${region !== undefined ? " AND location_region = \"" + region + "\"": ""}) AS dietspUnid) AS dietsp) AS distinctCombo GROUP BY diet_type) analysesPerDietType
+                        WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}")${startYear !== undefined ? " AND observation_year_begin >= " + startYear: ""}${endYear !== undefined ? " AND observation_year_end <= " + endYear: ""}${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}${region !== undefined ? " AND location_region = \"" + region + "\"": ""}) AS dietspUnid) AS dietsp) AS distinctCombo GROUP BY diet_type) analysesPerDietType
                 WHERE analysesPerDietType.diet_type = final1.diet_type
                 GROUP BY taxon, diet_type) final2
                 GROUP BY taxon
