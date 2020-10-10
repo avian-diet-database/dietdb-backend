@@ -146,11 +146,31 @@ export class AvianDietResolver {
         `
         const rawResult = await getManager().query(query);
 
-        let sourceList = []
+        let sourceList = [];
         for (let source of rawResult) {
             sourceList.push(source["source"]);
         }
 
         return sourceList;
+    }
+
+    @Query(() => [String])
+    async getAutocomplete(
+        @Arg("input") input: string
+    ) {
+        const query = `
+        SELECT name FROM
+	        (SELECT common_name AS name FROM avian_diet WHERE common_name LIKE "%${input}%"
+	        UNION
+	        SELECT  scientific_name AS name FROM avian_diet WHERE scientific_name LIKE "%${input}%") result
+        ORDER BY LENGTH(name) - LENGTH("${input}") ASC
+        LIMIT 10`
+
+        const rawResult = await getManager().query(query);
+        let resultList = [];
+        for (let item of rawResult) {
+            resultList.push(item["name"]);
+        }
+        return resultList;
     }
 }
