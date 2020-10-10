@@ -25,28 +25,18 @@ class GetPredatorOfArgs {
     @Field({ nullable: true })
     region?: string;
 }
+
 @ObjectType()
-export class PreySources {
-    @Field({ nullable: true })
+export class recordsPerSeason {
     @Field()
-    taxon: string;
+    season: string;
 
-    @Field({ nullable: true })
-    items?: string;
-
-    @Field({ nullable: true })
-    wt_or_vol?: string;
-
-    @Field({ nullable: true })
-    occurrence?: string;
-
-    @Field({ nullable: true })
-    unspecified?: string;
+    @Field()
+    count: number;
 }
 
 @ObjectType()
 export class Prey {
-    @Field({ nullable: true })
     @Field()
     taxon: string;
 
@@ -180,5 +170,49 @@ export class AvianDietResolver {
     ) {
         const result = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
         return result[0]["count"];
+    }
+
+    @Query(() => String)
+    async getNumStudies(
+        @Arg("name") name: string
+    ) {
+        const result = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
+        return result[0]["count"];
+    }
+
+    @Query(() => [recordsPerSeason])
+    async getRecordsPerSeason(
+        @Arg("name") name: string
+    ) {
+        const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY observation_season`);
+        let summer: recordsPerSeason =  { season: "summer", count: 0 }
+        let spring: recordsPerSeason =  { season: "spring", count: 0 }
+        let fall: recordsPerSeason =  { season: "fall", count: 0 }
+        let winter: recordsPerSeason =  { season: "winter", count: 0 }
+        let multiple: recordsPerSeason =  { season: "multiple", count: 0 }
+        let unspecified: recordsPerSeason =  { season: "unspecified", count: 0 }
+
+        for (let item of rawResult) {
+            if (String(item["season"]).includes('summer')) {
+                summer.count += +item["count"]
+            }
+            if (String(item["season"]).includes('spring')) {
+                spring.count += +item["count"]
+            }
+            if (String(item["season"]).includes('fall')) {
+                fall.count += +item["count"]
+            }
+            if (String(item["season"]).includes('winter')) {
+                winter.count += +item["count"]
+            }
+            if (String(item["season"]).includes('multiple')) {
+                multiple.count += +item["count"]
+            }
+            if (String(item["season"]).includes('unspecified')) {
+                unspecified.count += +item["count"]
+            }
+
+        }
+        return [summer, spring, fall, winter, multiple, unspecified];
     }
 }
