@@ -1,4 +1,4 @@
-import { Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
+import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import Utils from "../utils"
 
@@ -24,6 +24,24 @@ class GetPredatorOfArgs {
 
     @Field({ nullable: true })
     region?: string;
+}
+@ObjectType()
+export class PreySources {
+    @Field({ nullable: true })
+    @Field()
+    taxon: string;
+
+    @Field({ nullable: true })
+    items?: string;
+
+    @Field({ nullable: true })
+    wt_or_vol?: string;
+
+    @Field({ nullable: true })
+    occurrence?: string;
+
+    @Field({ nullable: true })
+    unspecified?: string;
 }
 
 @ObjectType()
@@ -53,8 +71,8 @@ export class AvianDietResolver {
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== undefined ? " AND observation_season = \"" + season + "\"": ""}
-        ${region !== undefined ? " AND location_region = \"" + region + "\"": ""}
+        ${season !== undefined ? " AND observation_season = \"" + season + "\"" : ""}
+        ${region !== undefined ? " AND location_region = \"" + region + "\"" : ""}
         `
         const query = `
         SELECT taxon
@@ -106,5 +124,33 @@ export class AvianDietResolver {
         GROUP BY taxon
         `
         return await getManager().query(query);
+    }
+
+    // Assumes sources will never be empty/null in database
+    // Prey Level doesn't matter since we will always include a record regardless of level, we prepend 'Unid.' with the next lowest level, see getPreyOf query for more detail
+    @Query(() => [String])
+    async getPreyOfSources(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {            
+        const argConditions = `
+        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
+        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
+        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
+        ${season !== undefined ? " AND observation_season = \"" + season + "\"" : ""}
+        ${region !== undefined ? " AND location_region = \"" + region + "\"" : ""}
+        ${dietType !== undefined ? " AND diet_type = \"" + dietType + "\"" : ""}
+        `
+
+        const query = `
+		SELECT DISTINCT source
+        FROM avian_diet
+        WHERE ${argConditions}
+        `
+        const rawResult = await getManager().query(query);
+
+        let sourceList = []
+        for (let source of rawResult) {
+            sourceList.push(source["source"]);
+        }
+
+        return sourceList;
     }
 }
