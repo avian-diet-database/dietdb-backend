@@ -173,4 +173,12 @@ export class AvianDietResolver {
         }
         return resultList;
     }
+
+    @Query(() => String)
+    async getNumRecords(
+        @Arg("name") name: string
+    ) {
+        const result = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
+        return result[0]["count"];
+    }
 }
