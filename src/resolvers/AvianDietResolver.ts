@@ -1,4 +1,3 @@
-import { stringify } from "querystring";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import Utils from "../utils"
