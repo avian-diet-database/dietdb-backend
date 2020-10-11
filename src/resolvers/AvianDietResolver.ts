@@ -1,3 +1,4 @@
+import { stringify } from "querystring";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import Utils from "../utils"
@@ -35,6 +36,15 @@ export class recordsPerSeason {
 
     @Field()
     y: number;
+}
+
+@ObjectType()
+export class StudiesAndRecordsCount {
+    @Field()
+    studies: string;
+
+    @Field()
+    records: string;
 }
 
 @ObjectType()
@@ -200,20 +210,16 @@ export class AvianDietResolver {
         return resultList;
     }
 
-    @Query(() => String)
-    async getNumRecords(
+    @Query(() => StudiesAndRecordsCount)
+    async getNumRecordsAndStudies(
         @Arg("name") name: string
     ) {
-        const result = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
-        return result[0]["count"];
-    }
-
-    @Query(() => String)
-    async getNumStudies(
-        @Arg("name") name: string
-    ) {
-        const result = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
-        return result[0]["count"];
+        const numStudies = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
+        const numRecords = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
+        return {
+            studies: numStudies[0]["count"],
+            records: numRecords[0]["count"]
+        }
     }
 
     @Query(() => [recordsPerSeason])
