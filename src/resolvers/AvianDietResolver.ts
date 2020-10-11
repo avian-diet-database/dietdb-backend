@@ -250,4 +250,18 @@ export class AvianDietResolver {
         }
         return [summer, spring, fall, winter, multiple, unspecified];
     }
+    @Query(() => [String])
+    async getRegionsPred(
+        @Arg("name") name: string
+    ) {
+        const query = `
+        SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        `
+        const rawResult = await getManager().query(query);
+        let regionList = [];
+        for (let item of rawResult) {
+            regionList.push(item["region"]);
+        }
+        return regionList;
+    }
 }
