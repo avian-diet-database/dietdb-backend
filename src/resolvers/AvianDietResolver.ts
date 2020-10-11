@@ -146,17 +146,51 @@ export class AvianDietResolver {
         return sourceList;
     }
 
+    // Searches through common_name and scientific_name
     @Query(() => [String])
     async getAutocompletePred(
         @Arg("input") input: string
     ) {
         const query = `
-        SELECT name FROM
-	        (SELECT common_name AS name FROM avian_diet WHERE common_name LIKE "%${input}%"
+        SELECT DISTINCT name FROM
+	        (SELECT DISTINCT common_name AS name FROM avian_diet WHERE common_name LIKE "%${input}%"
 	        UNION
-	        SELECT  scientific_name AS name FROM avian_diet WHERE scientific_name LIKE "%${input}%") result
+	        SELECT DISTINCT scientific_name AS name FROM avian_diet WHERE scientific_name LIKE "%${input}%") result
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC
         LIMIT 10`
+
+        const rawResult = await getManager().query(query);
+        let resultList = [];
+        for (let item of rawResult) {
+            resultList.push(item["name"]);
+        }
+        return resultList;
+    }
+
+    // Searches through all prey levels
+    @Query(() => [String])
+    async getAutocompletePrey(
+        @Arg("input") input: string
+    ) {
+        const query = `
+        SELECT DISTINCT name FROM
+            (SELECT DISTINCT prey_kingdom AS name FROM avian_diet WHERE prey_kingdom LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_phylum AS name FROM avian_diet WHERE prey_phylum LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_class AS name FROM avian_diet WHERE prey_class LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_order AS name FROM avian_diet WHERE prey_order LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_suborder AS name FROM avian_diet WHERE prey_suborder LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_family AS name FROM avian_diet WHERE prey_family LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_genus AS name FROM avian_diet WHERE prey_genus LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%") combinedResult
+        ORDER BY LENGTH(name) - LENGTH("${input}") ASC LIMIT 10
+        `
 
         const rawResult = await getManager().query(query);
         let resultList = [];
