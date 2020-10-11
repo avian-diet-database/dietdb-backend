@@ -26,13 +26,15 @@ class GetPredatorOfArgs {
     region?: string;
 }
 
+// x: season name
+// y: count of records
 @ObjectType()
 export class recordsPerSeason {
     @Field()
-    season: string;
+    x: string;
 
     @Field()
-    count: number;
+    y: number;
 }
 
 @ObjectType()
@@ -185,31 +187,31 @@ export class AvianDietResolver {
         @Arg("name") name: string
     ) {
         const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY observation_season`);
-        let summer: recordsPerSeason =  { season: "summer", count: 0 }
-        let spring: recordsPerSeason =  { season: "spring", count: 0 }
-        let fall: recordsPerSeason =  { season: "fall", count: 0 }
-        let winter: recordsPerSeason =  { season: "winter", count: 0 }
-        let multiple: recordsPerSeason =  { season: "multiple", count: 0 }
-        let unspecified: recordsPerSeason =  { season: "unspecified", count: 0 }
+        let summer: recordsPerSeason =  { x: "summer", y: 0 }
+        let spring: recordsPerSeason =  { x: "spring", y: 0 }
+        let fall: recordsPerSeason =  { x: "fall", y: 0 }
+        let winter: recordsPerSeason =  { x: "winter", y: 0 }
+        let multiple: recordsPerSeason =  { x: "multiple", y: 0 }
+        let unspecified: recordsPerSeason =  { x: "unspecified", y: 0 }
 
         for (let item of rawResult) {
             if (String(item["season"]).includes('summer')) {
-                summer.count += +item["count"]
+                summer.y += +item["count"]
             }
             if (String(item["season"]).includes('spring')) {
-                spring.count += +item["count"]
+                spring.y += +item["count"]
             }
             if (String(item["season"]).includes('fall')) {
-                fall.count += +item["count"]
+                fall.y += +item["count"]
             }
             if (String(item["season"]).includes('winter')) {
-                winter.count += +item["count"]
+                winter.y += +item["count"]
             }
             if (String(item["season"]).includes('multiple')) {
-                multiple.count += +item["count"]
+                multiple.y += +item["count"]
             }
             if (String(item["season"]).includes('unspecified')) {
-                unspecified.count += +item["count"]
+                unspecified.y += +item["count"]
             }
 
         }
