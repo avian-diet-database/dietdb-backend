@@ -147,7 +147,7 @@ export class AvianDietResolver {
     }
 
     @Query(() => [String])
-    async getAutocomplete(
+    async getAutocompletePred(
         @Arg("input") input: string
     ) {
         const query = `
@@ -213,7 +213,6 @@ export class AvianDietResolver {
             if (String(item["season"]).includes('unspecified')) {
                 unspecified.y += +item["count"]
             }
-
         }
         return [summer, spring, fall, winter, multiple, unspecified];
     }
