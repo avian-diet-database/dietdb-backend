@@ -26,10 +26,8 @@ class GetPredatorOfArgs {
     region: string;
 }
 
-// x: season name
-// y: count of records
 @ObjectType()
-export class recordsPerSeason {
+export class graphXY {
     @Field()
     x: string;
 
@@ -226,17 +224,17 @@ export class AvianDietResolver {
         }
     }
 
-    @Query(() => [recordsPerSeason])
+    @Query(() => [graphXY])
     async getRecordsPerSeason(
         @Arg("name") name: string
     ) {
         const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY observation_season`);
-        let summer: recordsPerSeason =  { x: "summer", y: 0 }
-        let spring: recordsPerSeason =  { x: "spring", y: 0 }
-        let fall: recordsPerSeason =  { x: "fall", y: 0 }
-        let winter: recordsPerSeason =  { x: "winter", y: 0 }
-        let multiple: recordsPerSeason =  { x: "multiple", y: 0 }
-        let unspecified: recordsPerSeason =  { x: "unspecified", y: 0 }
+        let summer: graphXY =  { x: "summer", y: 0 }
+        let spring: graphXY =  { x: "spring", y: 0 }
+        let fall: graphXY =  { x: "fall", y: 0 }
+        let winter: graphXY =  { x: "winter", y: 0 }
+        let multiple: graphXY =  { x: "multiple", y: 0 }
+        let unspecified: graphXY =  { x: "unspecified", y: 0 }
 
         for (let item of rawResult) {
             if (String(item["season"]).includes('summer')) {
