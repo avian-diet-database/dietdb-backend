@@ -10,8 +10,8 @@ class GetPredatorOfArgs {
     @Field({ defaultValue: "order"})
     preyLevel: string;
 
-    @Field({ nullable: true })
-    dietType?: string;
+    @Field({ defaultValue: "all"})
+    dietType: string;
 
     @Field({ nullable: true })
     startYear?: string;
@@ -19,11 +19,11 @@ class GetPredatorOfArgs {
     @Field({ nullable: true })
     endYear?: string;
 
-    @Field({ nullable: true })
-    season?: string;
+    @Field({ defaultValue: "all"})
+    season: string;
 
-    @Field({ nullable: true })
-    region?: string;
+    @Field({ defaultValue: "all"})
+    region: string;
 }
 
 // x: season name
@@ -72,15 +72,15 @@ export class AvianDietResolver {
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== undefined ? " AND observation_season = \"" + season + "\"" : ""}
-        ${region !== undefined ? " AND location_region = \"" + region + "\"" : ""}
+        ${season !== "all" ? " AND observation_season = \"" + season + "\"" : ""}
+        ${region !== "all" ? " AND location_region = \"" + region + "\"" : ""}
         `
         const query = `
         SELECT taxon
-            ${!dietType || dietType == "items" ? ", SUM(Items) as items" : "" }
-            ${!dietType || dietType == "wt_or_vol" ? ", SUM(Wt_or_Vol) as wt_or_vol" : "" }
-            ${!dietType || dietType == "occurrence" ? ", SUM(Occurrence) as occurrence" : "" }
-            ${!dietType || dietType == "unspecified" ? ", SUM(Unspecified) as unspecified" : "" }
+            ${dietType === "all" || dietType == "items" ? ", SUM(Items) as items" : "" }
+            ${dietType === "all" || dietType == "wt_or_vol" ? ", SUM(Wt_or_Vol) as wt_or_vol" : "" }
+            ${dietType === "all" || dietType == "occurrence" ? ", SUM(Occurrence) as occurrence" : "" }
+            ${dietType === "all" || dietType == "unspecified" ? ", SUM(Unspecified) as unspecified" : "" }
         FROM
             (SELECT taxon, final1.diet_type,
                 ROUND(SUM(Items) * 100.0 / n, 3) as Items,
@@ -123,6 +123,11 @@ export class AvianDietResolver {
             GROUP BY taxon, diet_type
         ) final2
         GROUP BY taxon
+        ${dietType !== "all" ? "HAVING" : ""} 
+            ${dietType == "items" ? "SUM(Items) IS NOT NULL" : "" }
+            ${dietType == "wt_or_vol" ? "SUM(Wt_or_Vol) IS NOT NULL" : "" }
+            ${dietType == "occurrence" ? "SUM(Occurrence) IS NOT NULL" : "" }
+            ${dietType == "unspecified" ? "SUM(Unspecified) IS NOT NULL" : "" }
         `
         return await getManager().query(query);
     }
