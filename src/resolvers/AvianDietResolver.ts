@@ -140,9 +140,9 @@ export class AvianDietResolver {
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== undefined ? " AND observation_season = \"" + season + "\"" : ""}
-        ${region !== undefined ? " AND location_region = \"" + region + "\"" : ""}
-        ${dietType !== undefined ? " AND diet_type = \"" + dietType + "\"" : ""}
+        ${season !== "all" ? " AND observation_season = \"" + season + "\"" : ""}
+        ${region !== "all" ? " AND location_region = \"" + region + "\"" : ""}
+        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `
 
         const query = `
