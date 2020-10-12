@@ -279,6 +279,39 @@ export class AvianDietResolver {
         return decades.values();
     }
 
+    @Query(() => [graphXY])
+    async getRecordsPerDietType(
+        @Arg("name") name: string
+    ) {
+        const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY diet_type`);
+        let items: graphXY = { x: "% by items", y: 0 }
+        let wt_or_vol: graphXY = { x: "% by weight/vol", y: 0 }
+        let occurrence: graphXY = { x: "Occurrence", y: 0 }
+        let unspecified: graphXY = { x: "Unspecified", y: 0 }
+
+        for (let item of rawResult) {
+            switch(item["diet"]) {
+                case "Items": {
+                    items.y += +item["count"];
+                    break;
+                }
+                case "Wt_or_Vol": {
+                    wt_or_vol.y += +item["count"];
+                    break;
+                }
+                case "Occurrence": {
+                    occurrence.y += +item["count"];
+                    break;
+                }
+                case "Unspecified": {
+                    unspecified.y += +item["count"];
+                    break;
+                }
+            }
+        }
+        return [items, wt_or_vol, occurrence, unspecified]
+    }
+
     @Query(() => [String])
     async getRegionsPred(
         @Arg("name") name: string
