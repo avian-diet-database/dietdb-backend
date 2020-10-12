@@ -258,6 +258,27 @@ export class AvianDietResolver {
         }
         return [summer, spring, fall, winter, multiple, unspecified];
     }
+
+    // Only includes decades with actual data points
+    @Query(() => [graphXY])
+    async getRecordsPerDecade(
+        @Arg("name") name: string
+    ) {
+        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
+        let decades = new Map();
+
+        for (let item of rawResult) {
+            let decadeNum = Math.floor(+item["year"] / 10) * 10;
+            let decadeXY: graphXY = decades.get(decadeNum.toString());
+            if (decadeXY === undefined) {
+                decadeXY = { x: decadeNum.toString(), y: 0};
+                decades.set(decadeNum.toString(), decadeXY);
+            }
+            decadeXY.y += +item["count"];
+        }
+        return decades.values();
+    }
+
     @Query(() => [String])
     async getRegionsPred(
         @Arg("name") name: string
