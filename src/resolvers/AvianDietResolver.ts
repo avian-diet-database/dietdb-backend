@@ -1,3 +1,4 @@
+import { appendFile } from "fs";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import Utils from "../utils"
@@ -177,7 +178,7 @@ export class AvianDietResolver {
 
     @Query(() => [Predator])
     async getPredatorOf(@Args() {preyName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        return [{ common_name: "Bobolink", family: "Icteridae", diet_type: "Items", fraction_diet: "71.5", number_of_studies: "1" },
+        let list =  [{ common_name: "Bobolink", family: "Icteridae", diet_type: "Items", fraction_diet: "71.5", number_of_studies: "1" },
     { common_name: "Grasshopper Sparrow", family: "Passerellidae", diet_type: "Items", fraction_diet: "70.7", number_of_studies: "1" },
     { common_name: "Philadelphia Vireo", family: "Vireonidae", diet_type: "Items", fraction_diet: "68.7", number_of_studies: "2" },
     { common_name: "Indigo Bunting", family: "Cardinalidae", diet_type: "Items", fraction_diet: "68", number_of_studies: "1" },
@@ -192,8 +193,13 @@ export class AvianDietResolver {
     { common_name: "Tennessee Warbler", family: "Parulidae", diet_type: "Wt_or_Vol", fraction_diet: "83", number_of_studies: "1" },
     { common_name: "Elegant Trogon", family: "Trogonidae", diet_type: "Wt_or_Vol", fraction_diet: "82.5", number_of_studies: "1" },
     { common_name: "Evening Grosbeak", family: "Fringillidae", diet_type: "Wt_or_Vol", fraction_diet: "80", number_of_studies: "1" },
-    { common_name: "Chipping Sparrow", family: "Passerellidae", diet_type: "Wt_or_Vol", fraction_diet: "69", number_of_studies: "1" },
+    { common_name: "Chipping Sparrow", family: "Passerellidae", diet_type: "Wt_or_Vol", fraction_diet: "69", number_of_studies: "1" }
     ]
+        let test: Predator = { common_name: "Mock Data", family: "Mock Data", diet_type: "Mock Data", fraction_diet: "Mock Diet", number_of_studies: "Mock Data"}
+        if (preyName || preyLevel || dietType || startYear || endYear || season || region) {
+            list.push(test);
+        }
+        return list;
     }
 
     // Assumes sources will never be empty/null in database
