@@ -3,12 +3,39 @@ import { getManager } from "typeorm";
 import Utils from "../utils"
 
 @ArgsType()
-class GetPredatorOfArgs {
+class GetPreyOfArgs {
     @Field()
     predatorName: string;
 
     @Field({ defaultValue: "order"})
     preyLevel: string;
+
+    @Field({ defaultValue: "all"})
+    dietType: string;
+
+    @Field({ nullable: true })
+    startYear?: string;
+
+    @Field({ nullable: true })
+    endYear?: string;
+
+    @Field({ defaultValue: "all"})
+    season: string;
+
+    @Field({ defaultValue: "all"})
+    region: string;
+}
+
+@ArgsType()
+class GetPredatorOfArgs {
+    @Field()
+    preyName: string;
+
+    @Field({ defaultValue: "order"})
+    preyLevel: string;
+
+    @Field({ nullable: true })
+    preyStage: string;
 
     @Field({ defaultValue: "all"})
     dietType: string;
@@ -62,10 +89,28 @@ export class Prey {
     unspecified?: string;
 }
 
+@ObjectType()
+export class Predator {
+    @Field()
+    common_name: string;
+
+    @Field()
+    family: string;
+
+    @Field()
+    diet_type: string;
+
+    @Field()
+    fraction_diet: string;
+
+    @Field()
+    number_of_studies: string;
+}
+
 @Resolver()
 export class AvianDietResolver {
     @Query(() => [Prey])
-    async getPreyOf(@Args() {predatorName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
+    async getPreyOf(@Args() {predatorName, preyLevel, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
@@ -130,10 +175,31 @@ export class AvianDietResolver {
         return await getManager().query(query);
     }
 
+    @Query(() => [Predator])
+    async getPredatorOf(@Args() {preyName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
+        return [{ common_name: "Bobolink", family: "Icteridae", diet_type: "Items", fraction_diet: "71.5", number_of_studies: "1" },
+    { common_name: "Grasshopper Sparrow", family: "Passerellidae", diet_type: "Items", fraction_diet: "70.7", number_of_studies: "1" },
+    { common_name: "Philadelphia Vireo", family: "Vireonidae", diet_type: "Items", fraction_diet: "68.7", number_of_studies: "2" },
+    { common_name: "Indigo Bunting", family: "Cardinalidae", diet_type: "Items", fraction_diet: "68", number_of_studies: "1" },
+    { common_name: "Oak Titmouse", family: "Paridae", diet_type: "Items", fraction_diet: "66.3", number_of_studies: "4" },
+    { common_name: "Yellow-billed Cuckoo", family: "Cuculidae", diet_type: "Items", fraction_diet: "63", number_of_studies: "2" },
+    { common_name: "Golden-crowned Kinglet", family: "Regulidae", diet_type: "Items", fraction_diet: "59.8", number_of_studies: "1" },
+    { common_name: "California Scrub-Jay", family: "Corvidae", diet_type: "Occurrence", fraction_diet: "86", number_of_studies: "3" },
+    { common_name: "Yello-billed cuckoo", family: "Cuculidae", diet_type: "Occurrence", fraction_diet: "83.5", number_of_studies: "2" },
+    { common_name: "Yellow-billed Magpie", family: "Corvidae", diet_type: "Occurrence", fraction_diet: "79.7", number_of_studies: "3" },
+    { common_name: "Baltimore Oriole", family: "Icteridae", diet_type: "Occurrence", fraction_diet: "78.1", number_of_studies: "4" },
+    { common_name: "Cedar Waxwing", family: "Bombycillidae", diet_type: "Wt_or_Vol", fraction_diet: "86.5", number_of_studies: "8" },
+    { common_name: "Tennessee Warbler", family: "Parulidae", diet_type: "Wt_or_Vol", fraction_diet: "83", number_of_studies: "1" },
+    { common_name: "Elegant Trogon", family: "Trogonidae", diet_type: "Wt_or_Vol", fraction_diet: "82.5", number_of_studies: "1" },
+    { common_name: "Evening Grosbeak", family: "Fringillidae", diet_type: "Wt_or_Vol", fraction_diet: "80", number_of_studies: "1" },
+    { common_name: "Chipping Sparrow", family: "Passerellidae", diet_type: "Wt_or_Vol", fraction_diet: "69", number_of_studies: "1" },
+    ]
+    }
+
     // Assumes sources will never be empty/null in database
     // Prey Level doesn't matter since we will always include a record regardless of level, we prepend 'Unid.' with the next lowest level, see getPreyOf query for more detail
     @Query(() => [String])
-    async getPreyOfSources(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {            
+    async getPreyOfSources(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {            
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
