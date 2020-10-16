@@ -3,7 +3,8 @@ import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { createConnection } from "typeorm";
 import { buildSchema } from "type-graphql";
-import { AvianDietResolver } from './resolvers/AvianDietResolver';
+import { PredatorPageResolver } from './resolvers/PredatorPageResolver';
+import { PreyPageResolver } from './resolvers/PreyPageResolver';
 
 const main = async () => {
     const app = express();
@@ -13,7 +14,7 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [AvianDietResolver],
+            resolvers: [PredatorPageResolver, PreyPageResolver],
         }),
         context: ({ req, res }) => ({ req, res })
     });
