@@ -49,6 +49,15 @@ export class StudiesAndRecordsCount {
 }
 
 @ObjectType()
+export class regionCountTuple {
+    @Field({ nullable: true })
+    region: string;
+
+    @Field({ nullable: true })
+    count: number;
+}
+
+@ObjectType()
 export class Prey {
     @Field()
     taxon: string;
@@ -312,5 +321,35 @@ export class PredatorPageResolver {
             }
         }
         return regionList;
+    }
+    
+    @Query(() => [regionCountTuple])
+    async getMapData(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+        const argConditions = `
+        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
+        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
+        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
+        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
+        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
+        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
+        `
+        const query = `
+        SELECT location_region as region, COUNT(location_region) as count FROM avian_diet WHERE ${argConditions} GROUP BY location_region
+        `
+        const rawResult = await getManager().query(query);
+        let regionCount = new Map();
+        for (let item of rawResult) {
+            let regions = item["region"].split(';');
+            for (let region of regions) {
+                let count: regionCountTuple = regionCount.get(region);
+                if (count === undefined) {
+                    count = { region: region, count: 0 };
+                    regionCount.set(region, count);
+                }
+                count.count += +item["count"];
+            }
+        }
+        console.log(regionCount);
+        return regionCount.values();
     }
 }
