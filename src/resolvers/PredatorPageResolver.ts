@@ -349,7 +349,6 @@ export class PredatorPageResolver {
                 count.count += +item["count"];
             }
         }
-        console.log(regionCount);
         return regionCount.values();
     }
 }
