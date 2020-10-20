@@ -257,10 +257,17 @@ export class PredatorPageResolver {
     }
 
     @Query(() => [graphXY])
-    async getRecordsPerDietType(
-        @Arg("name") name: string
-    ) {
-        const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY diet_type`);
+    async getRecordsPerDietType(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+        const argConditions = `
+        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
+        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
+        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
+        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
+        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
+        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
+        `
+
+        const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY diet_type`);
         let items: graphXY = { x: "% by items", y: 0 }
         let wt_or_vol: graphXY = { x: "% by weight/vol", y: 0 }
         let occurrence: graphXY = { x: "Occurrence", y: 0 }
