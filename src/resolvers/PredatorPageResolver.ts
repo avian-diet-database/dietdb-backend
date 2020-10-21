@@ -247,10 +247,16 @@ export class PredatorPageResolver {
 
     // Only includes decades with actual data points
     @Query(() => [graphXY])
-    async getRecordsPerDecade(
-        @Arg("name") name: string
-    ) {
-        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
+    async getRecordsPerDecade(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {            
+        const argConditions = `
+        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
+        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
+        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
+        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
+        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
+        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
+        `
+        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
         let decades = new Map();
 
         for (let item of rawResult) {
