@@ -94,10 +94,10 @@ export class PredatorPageResolver {
             ${dietType === "all" || dietType == "unspecified" ? ", SUM(Unspecified) as unspecified" : "" }
         FROM
             (SELECT taxon, final1.diet_type,
-                ROUND(SUM(Items) * 100.0 / n, 3) as Items,
-                ROUND(SUM(Wt_or_Vol) * 100.0 / n, 3) as Wt_or_Vol,
-                ROUND(SUM(Occurrence) * 100.0 / n, 3) as Occurrence,
-                ROUND(SUM(Unspecified) * 100.0 / n, 3) as Unspecified
+                SUM(Items) * 100.0 / n as Items,
+                SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol,
+                SUM(Occurrence) * 100.0 / n as Occurrence,
+                SUM(Unspecified) * 100.0 / n as Unspecified
             FROM
                 (SELECT diet_type,
                     ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
