@@ -257,14 +257,24 @@ export class PredatorPageResolver {
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `
         const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
+        const minMaxDecades = await getManager().query(`SELECT MIN(observation_year_end) as min, MAX(observation_year_end) as max FROM avian_diet WHERE common_name = "${predatorName}" OR scientific_name = "${predatorName}"`);
+        const minDecade = Math.floor(+minMaxDecades[0]["min"] / 10) * 10;
+        const maxDecade = Math.floor(+minMaxDecades[0]["max"] / 10) * 10;
+
         let decades = new Map();
+
+        for (let i = 0; i <= maxDecade - minDecade; i += 10) {
+            const currDecade = minDecade + i;
+            decades.set(currDecade, { x: currDecade.toString(), y: 0 });
+        }
 
         for (let item of rawResult) {
             let decadeNum = Math.floor(+item["year"] / 10) * 10;
-            let decadeXY: graphXY = decades.get(decadeNum.toString());
+            let decadeXY: graphXY = decades.get(decadeNum);
             if (decadeXY === undefined) {
-                decadeXY = { x: decadeNum.toString(), y: 0};
-                decades.set(decadeNum.toString(), decadeXY);
+                // The previous loop is supposed to gaurantee all relevant decades are in decades map
+                // TODO: More detail in error message
+                throw new Error(`${decadeNum} not found in decade map`);
             }
             decadeXY.y += +item["count"];
         }
