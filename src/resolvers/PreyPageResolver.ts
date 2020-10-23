@@ -67,7 +67,7 @@ export class PreyPageResolver {
     { common_name: "Elegant Trogon", family: "Trogonidae", diet_type: "Wt_or_Vol", fraction_diet: "82.5", number_of_studies: "1" },
     { common_name: "Evening Grosbeak", family: "Fringillidae", diet_type: "Wt_or_Vol", fraction_diet: "80", number_of_studies: "1" },
     { common_name: "Chipping Sparrow", family: "Passerellidae", diet_type: "Wt_or_Vol", fraction_diet: "69", number_of_studies: "1" }
-    ]
+    ];
         let test: Predator = { common_name: "Mock Data", family: "Mock Data", diet_type: "Mock Data", fraction_diet: "Mock Diet", number_of_studies: "Mock Data"}
         if (preyName || preyLevel || dietType || startYear || endYear || season || region) {
             list.push(test);
@@ -98,7 +98,7 @@ export class PreyPageResolver {
             UNION
             SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%") combinedResult
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC LIMIT 10
-        `
+        `;
 
         const rawResult = await getManager().query(query);
         let resultList = [];

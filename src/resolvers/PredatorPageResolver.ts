@@ -85,7 +85,8 @@ export class PredatorPageResolver {
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `
+        `;
+
         const query = `
         SELECT taxon
             ${dietType === "all" || dietType == "items" ? ", SUM(Items) as items" : "" }
@@ -139,7 +140,8 @@ export class PredatorPageResolver {
             ${dietType == "wt_or_vol" ? "SUM(Wt_or_Vol) IS NOT NULL" : "" }
             ${dietType == "occurrence" ? "SUM(Occurrence) IS NOT NULL" : "" }
             ${dietType == "unspecified" ? "SUM(Unspecified) IS NOT NULL" : "" }
-        `
+        `;
+
         return await getManager().query(query);
     }
 
@@ -154,13 +156,13 @@ export class PredatorPageResolver {
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
-        `
+        `;
 
         const query = `
 		SELECT DISTINCT source
         FROM avian_diet
         WHERE ${argConditions}
-        `
+        `;
         const rawResult = await getManager().query(query);
 
         let sourceList = [];
@@ -182,7 +184,8 @@ export class PredatorPageResolver {
 	        UNION
 	        SELECT DISTINCT scientific_name AS name FROM avian_diet WHERE scientific_name LIKE "%${input}%") result
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC
-        LIMIT 10`
+        LIMIT 10
+        `;
 
         const rawResult = await getManager().query(query);
         let resultList = [];
@@ -201,7 +204,7 @@ export class PredatorPageResolver {
         return {
             studies: numStudies[0]["count"],
             records: numRecords[0]["count"]
-        }
+        };
     }
 
     @Query(() => [graphXY])
@@ -213,33 +216,34 @@ export class PredatorPageResolver {
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
-        `
+        `;
+
         const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_season`);
-        let summer: graphXY =  { x: "summer", y: 0 }
-        let spring: graphXY =  { x: "spring", y: 0 }
-        let fall: graphXY =  { x: "fall", y: 0 }
-        let winter: graphXY =  { x: "winter", y: 0 }
-        let multiple: graphXY =  { x: "multiple", y: 0 }
-        let unspecified: graphXY =  { x: "unspecified", y: 0 }
+        let summer: graphXY =  { x: "summer", y: 0 };
+        let spring: graphXY =  { x: "spring", y: 0 };
+        let fall: graphXY =  { x: "fall", y: 0 };
+        let winter: graphXY =  { x: "winter", y: 0 };
+        let multiple: graphXY =  { x: "multiple", y: 0 };
+        let unspecified: graphXY =  { x: "unspecified", y: 0 };
 
         for (let item of rawResult) {
             if (String(item["season"]).includes('summer')) {
-                summer.y += +item["count"]
+                summer.y += +item["count"];
             }
             if (String(item["season"]).includes('spring')) {
-                spring.y += +item["count"]
+                spring.y += +item["count"];
             }
             if (String(item["season"]).includes('fall')) {
-                fall.y += +item["count"]
+                fall.y += +item["count"];
             }
             if (String(item["season"]).includes('winter')) {
-                winter.y += +item["count"]
+                winter.y += +item["count"];
             }
             if (String(item["season"]).includes('multiple')) {
-                multiple.y += +item["count"]
+                multiple.y += +item["count"];
             }
             if (String(item["season"]).includes('unspecified')) {
-                unspecified.y += +item["count"]
+                unspecified.y += +item["count"];
             }
         }
         return [summer, spring, fall, winter, multiple, unspecified];
@@ -255,7 +259,8 @@ export class PredatorPageResolver {
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
-        `
+        `;
+
         const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
         const minMaxDecades = await getManager().query(`SELECT MIN(observation_year_end) as min, MAX(observation_year_end) as max FROM avian_diet WHERE common_name = "${predatorName}" OR scientific_name = "${predatorName}"`);
         const minDecade = Math.floor(+minMaxDecades[0]["min"] / 10) * 10;
@@ -290,13 +295,13 @@ export class PredatorPageResolver {
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
-        `
+        `;
 
         const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY diet_type`);
-        let items: graphXY = { x: "% by items", y: 0 }
-        let wt_or_vol: graphXY = { x: "% by weight/vol", y: 0 }
-        let occurrence: graphXY = { x: "Occurrence", y: 0 }
-        let unspecified: graphXY = { x: "Unspecified", y: 0 }
+        let items: graphXY = { x: "% by items", y: 0 };
+        let wt_or_vol: graphXY = { x: "% by weight/vol", y: 0 };
+        let occurrence: graphXY = { x: "Occurrence", y: 0 };
+        let unspecified: graphXY = { x: "Unspecified", y: 0 };
 
         for (let item of rawResult) {
             switch(item["diet"]) {
@@ -318,7 +323,7 @@ export class PredatorPageResolver {
                 }
             }
         }
-        return [items, wt_or_vol, occurrence, unspecified]
+        return [items, wt_or_vol, occurrence, unspecified];
     }
 
     @Query(() => [String])
@@ -327,7 +332,8 @@ export class PredatorPageResolver {
     ) {
         const query = `
         SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
-        `
+        `;
+
         const rawResult = await getManager().query(query);
         let regionList = new Set();
         for (let item of rawResult) {
@@ -348,10 +354,10 @@ export class PredatorPageResolver {
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
-        `
-        const query = `
-        SELECT location_region as region, COUNT(location_region) as count FROM avian_diet WHERE ${argConditions} GROUP BY location_region
-        `
+        `;
+
+        const query = `SELECT location_region as region, COUNT(location_region) as count FROM avian_diet WHERE ${argConditions} GROUP BY location_region`;
+
         const rawResult = await getManager().query(query);
         let regionCount = new Map();
         for (let item of rawResult) {
