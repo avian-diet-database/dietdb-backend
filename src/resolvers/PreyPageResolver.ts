@@ -7,7 +7,7 @@ class GetPredatorOfArgs {
     @Field()
     preyName: string;
 
-    @Field({ defaultValue: "order"})
+    @Field({ defaultValue: "order", deprecationReason: "Will be inferred by preyName" })
     preyLevel: string;
 
     @Field({ nullable: true })
