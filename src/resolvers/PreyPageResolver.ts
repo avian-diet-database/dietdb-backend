@@ -8,9 +8,6 @@ class GetPredatorOfArgs {
     @Field()
     preyName: string;
 
-    @Field({ defaultValue: "order", deprecationReason: "Will be inferred by preyName" })
-    preyLevel: string;
-
     @Field({ defaultValue: "any" })
     @IsIn(["any", "larva", "pupa", "adult"])
     preyStage: string;
@@ -54,7 +51,7 @@ export class Predator {
 @Resolver()
 export class PreyPageResolver {
     @Query(() => [Predator])
-    async getPredatorOf(@Args() {preyName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
+    async getPredatorOf(@Args() {preyName, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
         const argConditions = `
         (prey_kingdom = "${preyName}" OR prey_phylum = "${preyName}" OR prey_class = "${preyName}" OR prey_order = "${preyName}" OR prey_suborder = "${preyName}" OR prey_family = "${preyName}" OR prey_genus = "${preyName}" OR prey_scientific_name = "${preyName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
