@@ -1,3 +1,4 @@
+import { IsIn } from "class-validator";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 
@@ -14,6 +15,7 @@ class GetPredatorOfArgs {
     preyStage: string;
 
     @Field({ defaultValue: "all"})
+    @IsIn(["wt_or_vol", "items", "occurrence", "unspecified", "all"])
     dietType: string;
 
     @Field({ nullable: true })
@@ -23,6 +25,7 @@ class GetPredatorOfArgs {
     endYear?: string;
 
     @Field({ defaultValue: "all"})
+    @IsIn(["spring", "summer", "fall", "winter", "multiple", "unspecified", "all"])
     season: string;
 
     @Field({ defaultValue: "all"})
@@ -51,28 +54,31 @@ export class Predator {
 export class PreyPageResolver {
     @Query(() => [Predator])
     async getPredatorOf(@Args() {preyName, preyLevel, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        let list =  [{ common_name: "Bobolink", family: "Icteridae", diet_type: "Items", fraction_diet: "71.5", number_of_studies: "1" },
-    { common_name: "Grasshopper Sparrow", family: "Passerellidae", diet_type: "Items", fraction_diet: "70.7", number_of_studies: "1" },
-    { common_name: "Philadelphia Vireo", family: "Vireonidae", diet_type: "Items", fraction_diet: "68.7", number_of_studies: "2" },
-    { common_name: "Indigo Bunting", family: "Cardinalidae", diet_type: "Items", fraction_diet: "68", number_of_studies: "1" },
-    { common_name: "Oak Titmouse", family: "Paridae", diet_type: "Items", fraction_diet: "66.3", number_of_studies: "4" },
-    { common_name: "Yellow-billed Cuckoo", family: "Cuculidae", diet_type: "Items", fraction_diet: "63", number_of_studies: "2" },
-    { common_name: "Golden-crowned Kinglet", family: "Regulidae", diet_type: "Items", fraction_diet: "59.8", number_of_studies: "1" },
-    { common_name: "California Scrub-Jay", family: "Corvidae", diet_type: "Occurrence", fraction_diet: "86", number_of_studies: "3" },
-    { common_name: "Yello-billed cuckoo", family: "Cuculidae", diet_type: "Occurrence", fraction_diet: "83.5", number_of_studies: "2" },
-    { common_name: "Yellow-billed Magpie", family: "Corvidae", diet_type: "Occurrence", fraction_diet: "79.7", number_of_studies: "3" },
-    { common_name: "Baltimore Oriole", family: "Icteridae", diet_type: "Occurrence", fraction_diet: "78.1", number_of_studies: "4" },
-    { common_name: "Cedar Waxwing", family: "Bombycillidae", diet_type: "Wt_or_Vol", fraction_diet: "86.5", number_of_studies: "8" },
-    { common_name: "Tennessee Warbler", family: "Parulidae", diet_type: "Wt_or_Vol", fraction_diet: "83", number_of_studies: "1" },
-    { common_name: "Elegant Trogon", family: "Trogonidae", diet_type: "Wt_or_Vol", fraction_diet: "82.5", number_of_studies: "1" },
-    { common_name: "Evening Grosbeak", family: "Fringillidae", diet_type: "Wt_or_Vol", fraction_diet: "80", number_of_studies: "1" },
-    { common_name: "Chipping Sparrow", family: "Passerellidae", diet_type: "Wt_or_Vol", fraction_diet: "69", number_of_studies: "1" }
-    ];
-        let test: Predator = { common_name: "Mock Data", family: "Mock Data", diet_type: "Mock Data", fraction_diet: "Mock Diet", number_of_studies: "Mock Data"}
-        if (preyName || preyLevel || dietType || startYear || endYear || season || region) {
-            list.push(test);
-        }
-        return list;
+        const argConditions = `
+        (prey_kingdom = "${preyName}" OR prey_phylum = "${preyName}" OR prey_class = "${preyName}" OR prey_order = "${preyName}" OR prey_suborder = "${preyName}" OR prey_family = "${preyName}" OR prey_genus = "${preyName}" OR prey_scientific_name = "${preyName}")
+        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
+        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
+        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
+        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
+        `;
+
+        const query = `
+        SELECT
+                common_name, family, diet_type, AVG(fraction_diet) AS fraction_diet, number_of_studies
+        FROM
+            (SELECT
+                common_name, family, diet_type,
+                IF(diet_type = "Occurrence", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet,
+                COUNT(source) AS number_of_studies
+            FROM
+                avian_diet
+            WHERE ${argConditions}
+            GROUP BY source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites
+        ) final1
+        GROUP BY common_name, family, diet_type
+        `;
+
+        return await getManager().query(query);
     }
 
     // Searches through all prey levels
