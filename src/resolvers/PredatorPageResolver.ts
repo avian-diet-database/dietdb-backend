@@ -261,8 +261,8 @@ export class PredatorPageResolver {
         ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
-        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
-        const minMaxDecades = await getManager().query(`SELECT MIN(observation_year_end) as min, MAX(observation_year_end) as max FROM avian_diet WHERE common_name = "${predatorName}" OR scientific_name = "${predatorName}"`);
+        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} AND observation_year_end IS NOT NULL GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
+        const minMaxDecades = await getManager().query(`SELECT MIN(observation_year_end) as min, MAX(observation_year_end) as max FROM avian_diet WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}") AND observation_year_end IS NOT NULL`);
         const minDecade = Math.floor(+minMaxDecades[0]["min"] / 10) * 10;
         const maxDecade = Math.floor(+minMaxDecades[0]["max"] / 10) * 10;
 
