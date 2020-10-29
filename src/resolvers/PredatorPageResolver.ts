@@ -298,32 +298,33 @@ export class PredatorPageResolver {
         `;
 
         const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY diet_type`);
-        let items: graphXY = { x: "% by items", y: 0 };
-        let wt_or_vol: graphXY = { x: "% by weight/vol", y: 0 };
-        let occurrence: graphXY = { x: "Occurrence", y: 0 };
-        let unspecified: graphXY = { x: "Unspecified", y: 0 };
+        let itemCount = 0;
+        let wtVolCount = 0;
+        let occurrenceCount = 0;
+        let unspecifiedCount = 0;
 
         for (let item of rawResult) {
             switch(item["diet"]) {
                 case "Items": {
-                    items.y += +item["count"];
+                    itemCount += +item["count"];
                     break;
                 }
                 case "Wt_or_Vol": {
-                    wt_or_vol.y += +item["count"];
+                    wtVolCount += +item["count"];
                     break;
                 }
                 case "Occurrence": {
-                    occurrence.y += +item["count"];
+                    occurrenceCount += +item["count"];
                     break;
                 }
                 case "Unspecified": {
-                    unspecified.y += +item["count"];
+                    unspecifiedCount += +item["count"];
                     break;
                 }
             }
         }
-        return [items, wt_or_vol, occurrence, unspecified];
+        let totalCount = itemCount + wtVolCount + occurrenceCount + unspecifiedCount;
+        return [{ x: "% by items", y: (itemCount / totalCount) * 100 }, { x: "% by weight/vol", y: (wtVolCount / totalCount) * 100 }, { x: "Occurrence", y: (occurrenceCount / totalCount) * 100 }, { x: "Unspecified", y: (unspecifiedCount / totalCount) * 100 }];
     }
 
     @Query(() => [String])
