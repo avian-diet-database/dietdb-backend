@@ -11,7 +11,8 @@ class GetPredatorOfArgs {
     @Field({ defaultValue: "order", deprecationReason: "Will be inferred by preyName" })
     preyLevel: string;
 
-    @Field({ nullable: true })
+    @Field({ defaultValue: "any" })
+    @IsIn(["any", "larva", "pupa", "adult"])
     preyStage: string;
 
     @Field({ defaultValue: "all"})
