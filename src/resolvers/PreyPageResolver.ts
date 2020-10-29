@@ -77,6 +77,7 @@ export class PreyPageResolver {
             GROUP BY source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites
         ) final1
         GROUP BY common_name, family, diet_type
+        ${dietType !== "all" ? "HAVING diet_type = \"" + dietType + "\"" : ""}
         `;
 
         return await getManager().query(query);
