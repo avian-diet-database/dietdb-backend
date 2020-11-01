@@ -51,9 +51,10 @@ export class Predator {
 @Resolver()
 export class PreyPageResolver {
     @Query(() => [Predator])
-    async getPredatorOf(@Args() {preyName, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
+    async getPredatorOf(@Args() {preyName, preyStage, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
         const argConditions = `
         (prey_kingdom = "${preyName}" OR prey_phylum = "${preyName}" OR prey_class = "${preyName}" OR prey_order = "${preyName}" OR prey_suborder = "${preyName}" OR prey_family = "${preyName}" OR prey_genus = "${preyName}" OR prey_scientific_name = "${preyName}")
+        ${preyStage !== "any" ? (preyStage === "adult" ? " AND (prey_stage = \"" + preyStage + "\" OR prey_stage IS NULL)" : " AND prey_stage = \"" + preyStage + "\"") : ""}
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
@@ -62,12 +63,11 @@ export class PreyPageResolver {
 
         const query = `
         SELECT
-                common_name, family, diet_type, AVG(fraction_diet) AS fraction_diet, number_of_studies
+                common_name, family, diet_type, AVG(fraction_diet) AS fraction_diet, COUNT(DISTINCT source) AS number_of_studies
         FROM
             (SELECT
-                common_name, family, diet_type,
-                IF(diet_type = "Occurrence", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet,
-                COUNT(source) AS number_of_studies
+                common_name, family, diet_type, source,
+                IF(diet_type = "Occurrence", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet
             FROM
                 avian_diet
             WHERE ${argConditions}
