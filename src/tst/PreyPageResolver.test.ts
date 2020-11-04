@@ -24,6 +24,33 @@ describe('getPredatorOf', () => {
         });
         expect(response["data"]!.getPredatorOf.length).toBe(3);
     });
+
+    it("get predator all arguments", async () => {
+        const response = await gCall({
+            source: GET_PREDATOR_OF,
+            variableValues: {
+                name: "Suliformes",
+                stage: "adult",
+                metrics: "occurrence",
+                startYear: "1990",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
+            }
+        });
+        expect(response["data"]!.getPredatorOf.length).toBe(1);
+    });
+
+    it("get predator of larva", async () => {
+        const response = await gCall({
+            source: GET_PREDATOR_OF,
+            variableValues: {
+                name: "Suliformes",
+                stage: "larva",
+            }
+        });
+        expect(response["data"]!.getPredatorOf.length).toBe(0);
+    });
 });
 
 describe('getAutocompletePrey', () => {

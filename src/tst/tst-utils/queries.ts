@@ -28,7 +28,7 @@ export const GET_PREY_OF = `
 export const GET_PREDATOR_OF = `
   query(
     $name: String!
-    $level: String
+    $stage: String
     $metrics: String
     $startYear: String
     $endYear: String
@@ -37,7 +37,7 @@ export const GET_PREDATOR_OF = `
   ) {
     getPredatorOf(
       preyName: $name
-      preyStage: $level
+      preyStage: $stage
       dietType: $metrics
       startYear: $startYear
       endYear: $endYear
@@ -133,8 +133,22 @@ export const GET_REGIONS_PRED = `
   }
 `;
 export const GET_PREY_OF_SOURCES = `
-  query($name: String!) {
-    getPreyOfSources(predatorName: $name)
+  query(
+    $name: String!
+    $metrics: String
+    $startYear: String
+    $endYear: String
+    $season: String
+    $region: String
+  ) {
+    getPreyOfSources(
+      predatorName: $name
+      dietType: $metrics
+      startYear: $startYear
+      endYear: $endYear
+      season: $season
+      region: $region
+    )
   }
 `;
 export const GET_NUM_RECORDS_AND_STUDIES = `

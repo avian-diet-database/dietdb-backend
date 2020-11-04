@@ -34,6 +34,22 @@ describe('getPreyOf', () => {
         });
         expect(response["data"]!.getPreyOf.length).toBe(0);
     });
+
+    it("get prey all arguments", async () => {
+        const response = await gCall({
+            source: GET_PREY_OF,
+            variableValues: {
+                name: "Bald Eagle",
+                level: "suborder",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
+            }
+        });
+        expect(response["data"]!.getPreyOf.length).toBe(22);
+    });
 });
 
 describe('getPreyOfSources', () => {
@@ -46,6 +62,21 @@ describe('getPreyOfSources', () => {
         });
         expect(response["data"]!.getPreyOfSources.length).toBe(29);
     });
+
+    it("get prey sources all arguments", async () => {
+        const response = await gCall({
+            source: GET_PREY_OF_SOURCES,
+            variableValues: {
+                name: "Bald Eagle",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
+            }
+        });
+        expect(response["data"]!.getPreyOfSources.length).toBe(1);
+    });
 });
 
 describe('getAutocompletePred', () => {
@@ -57,7 +88,7 @@ describe('getAutocompletePred', () => {
             }
         });
         expect(response["data"]!.getAutocompletePred.length).toBe(4);
-    })
+    });
 });
 
 describe('getNumRecordsAndStudies', () => {
@@ -70,7 +101,7 @@ describe('getNumRecordsAndStudies', () => {
         });
         expect(response["data"]!.getNumRecordsAndStudies.studies).toBe('29');
         expect(response["data"]!.getNumRecordsAndStudies.records).toBe('1218');
-    })
+    });
 });
 
 describe('getRecordsPerSeason', () => {
@@ -79,6 +110,21 @@ describe('getRecordsPerSeason', () => {
             source: RECORDS_PER_SEASON,
             variableValues: {
                 name: "Bald Eagle"
+            }
+        });
+        expect(response["data"]!.getRecordsPerSeason.length).toBe(6);
+    });
+
+    it("get records per season all arguments", async () => {
+        const response = await gCall({
+            source: RECORDS_PER_SEASON,
+            variableValues: {
+                name: "Bald Eagle",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
             }
         });
         expect(response["data"]!.getRecordsPerSeason.length).toBe(6);
@@ -95,6 +141,21 @@ describe('getRecordsPerDecade', () => {
         });
         expect(response["data"]!.getRecordsPerDecade.length).toBe(9);
     });
+
+    it("get records per decade all arguments", async () => {
+        const response = await gCall({
+            source: RECORDS_PER_DECADE,
+            variableValues: {
+                name: "Bald Eagle",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
+            }
+        });
+        expect(response["data"]!.getRecordsPerDecade.length).toBe(9);
+    });
 });
 
 describe('getRecordsPerDietType', () => {
@@ -103,6 +164,21 @@ describe('getRecordsPerDietType', () => {
             source: RECORDS_PER_DIET_TYPE,
             variableValues: {
                 name: "Bald Eagle"
+            }
+        });
+        expect(response["data"]!.getRecordsPerDietType.length).toBe(4);
+    });
+
+    it("get records per diet type all arguments", async () => {
+        const response = await gCall({
+            source: RECORDS_PER_DIET_TYPE,
+            variableValues: {
+                name: "Bald Eagle",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
             }
         });
         expect(response["data"]!.getRecordsPerDietType.length).toBe(4);
@@ -130,5 +206,20 @@ describe('getMapData', () => {
             }
         });
         expect(response["data"]!.getMapData.length).toBe(25);
+    });
+
+    it("get map data all arguments", async () => {
+        const response = await gCall({
+            source: GET_MAP_DATA,
+            variableValues: {
+                name: "Bald Eagle",
+                metrics: "occurrence",
+                startYear: "2000",
+                endYear: "2020",
+                season: "spring",
+                region: "British Columbia"
+            }
+        });
+        expect(response["data"]!.getMapData.length).toBe(1);
     });
 });
