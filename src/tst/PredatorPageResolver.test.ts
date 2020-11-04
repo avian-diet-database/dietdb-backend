@@ -13,7 +13,7 @@ afterAll(async () => {
     await conn.close();
 });
 
-// Running against values obtained via R scripts in https://github.com/hurlbertlab/dietdatabase/commit/b184feaa01b695eb66d12911c8b7eccb12b2f3d7, particularly the speciesSummary function
+// Running against values obtained via R scripts in https://github.com/hurlbertlab/dietdatabase/blob/b184feaa01b695eb66d12911c8b7eccb12b2f3d7/scripts/database_summary_functions.R, particularly the speciesSummary function
 describe('getPreyOf', () => {
     it("get prey", async () => {
         const response = await gCall({
