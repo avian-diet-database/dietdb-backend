@@ -7,11 +7,23 @@
     "devJS": "nodemon dist/index.js",
     "startJS": "node dist/index.js",
     "devTS": "nodemon --exec ts-node src/index.ts",
-    "test": "jest",
+    "db:setup": "node dist/tst/tst-utils/setup.js",
+    "test": "npm run db:setup && jest",
     "startTS": "ts-node src/index.ts",
     "watch": "tsc -w",
     "build": "tsc",
     "start": "node dist/index.js"
+  },
+  "jest": {
+    "testMatch": [
+      "**/?(*.)+(spec|test).[j]s?(x)"
+    ],
+    "collectCoverageFrom": [
+      "dist/**/*.js"
+    ],
+    "collectCoverage": true,
+    "verbose": true,
+    "testTimeout": 30000
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -28,6 +40,7 @@
     "typeorm": "^0.2.25"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.15",
     "@types/node": "^14.6.2",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^2.34.0",

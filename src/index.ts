@@ -2,9 +2,7 @@ import 'reflect-metadata'
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { createConnection } from "typeorm";
-import { buildSchema } from "type-graphql";
-import { PredatorPageResolver } from './resolvers/PredatorPageResolver';
-import { PreyPageResolver } from './resolvers/PreyPageResolver';
+import { createSchema } from './utils/createSchema';
 
 const main = async () => {
     const app = express();
@@ -13,9 +11,7 @@ const main = async () => {
     conn.runMigrations();
 
     const apolloServer = new ApolloServer({
-        schema: await buildSchema({
-            resolvers: [PredatorPageResolver, PreyPageResolver],
-        }),
+        schema: await createSchema(),
         context: ({ req, res }) => ({ req, res })
     });
 
