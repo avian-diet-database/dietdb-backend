@@ -9,30 +9,30 @@ export default class Utils {
         let initialLeft = "IFNULL(prey_phylum, ";
         let initialRight = "prey_kingdom)";
         if (preyLevel === "prey_phylum") {
-            return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+            return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
         }
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_class, ";
         if (preyLevel === "prey_class") {
-            return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+            return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
         }
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_order, ";
         if (preyLevel === "prey_order") {
-            return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+            return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
         }
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_suborder, ";
         if (preyLevel === "prey_suborder") {
-            return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+            return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
         }
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_genus, ";
         if (preyLevel === "prey_genus") {
-            return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+            return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
         }
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_scientific_name, ";
-        return `${initialLeft} CONCAT("Unid. ", ${initialRight})`;
+        return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
     }
 }
