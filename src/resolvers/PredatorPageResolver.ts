@@ -323,8 +323,7 @@ export class PredatorPageResolver {
                 }
             }
         }
-        let totalCount = itemCount + wtVolCount + occurrenceCount + unspecifiedCount;
-        return [{ x: "% by items", y: (itemCount / totalCount) * 100 }, { x: "% by weight/vol", y: (wtVolCount / totalCount) * 100 }, { x: "Occurrence", y: (occurrenceCount / totalCount) * 100 }, { x: "Unspecified", y: (unspecifiedCount / totalCount) * 100 }];
+        return [{ x: "by items", y: itemCount }, { x: "by weight/vol", y: wtVolCount }, { x: "Occurrence", y: occurrenceCount }, { x: "Unspecified", y: unspecifiedCount }];
     }
 
     @Query(() => [String])
