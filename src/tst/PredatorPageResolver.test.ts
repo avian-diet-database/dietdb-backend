@@ -112,7 +112,7 @@ describe('getRecordsPerSeason', () => {
                 name: "Bald Eagle"
             }
         });
-        expect(response["data"]!.getRecordsPerSeason.length).toBe(6);
+        expect(response["data"]!.getRecordsPerSeason.length).toBe(5);
     });
 
     it("get records per season all arguments", async () => {
@@ -127,7 +127,7 @@ describe('getRecordsPerSeason', () => {
                 region: "British Columbia"
             }
         });
-        expect(response["data"]!.getRecordsPerSeason.length).toBe(6);
+        expect(response["data"]!.getRecordsPerSeason.length).toBe(5);
     });
 });
 

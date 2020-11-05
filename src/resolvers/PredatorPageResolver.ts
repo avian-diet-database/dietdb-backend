@@ -223,8 +223,7 @@ export class PredatorPageResolver {
         let spring: graphXY =  { x: "spring", y: 0 };
         let fall: graphXY =  { x: "fall", y: 0 };
         let winter: graphXY =  { x: "winter", y: 0 };
-        let multiple: graphXY =  { x: "multiple", y: 0 };
-        let unspecified: graphXY =  { x: "unspecified", y: 0 };
+        let multipleUnspecified: graphXY =  { x: "multiple/unspecified", y: 0 };
 
         for (let item of rawResult) {
             if (String(item["season"]).includes('summer')) {
@@ -239,14 +238,11 @@ export class PredatorPageResolver {
             if (String(item["season"]).includes('winter')) {
                 winter.y += +item["count"];
             }
-            if (String(item["season"]).includes('multiple')) {
-                multiple.y += +item["count"];
-            }
-            if (String(item["season"]).includes('unspecified')) {
-                unspecified.y += +item["count"];
+            if (String(item["season"]).includes('multiple') || String(item["season"]).includes('unspecified') ) {
+                multipleUnspecified.y += +item["count"];
             }
         }
-        return [summer, spring, fall, winter, multiple, unspecified];
+        return [summer, spring, fall, winter, multipleUnspecified];
     }
 
     // Only includes decades with actual data points
