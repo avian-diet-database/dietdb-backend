@@ -102,6 +102,7 @@ export class PreyPageResolver {
             SELECT DISTINCT prey_genus AS name FROM avian_diet WHERE prey_genus LIKE "%${input}%"
             UNION
             SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%") combinedResult
+        WHERE name != "Unknown"
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC LIMIT 10
         `;
 
