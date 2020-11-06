@@ -319,7 +319,7 @@ export class PredatorPageResolver {
                 }
             }
         }
-        return [{ x: "by items", y: itemCount }, { x: "by weight/vol", y: wtVolCount }, { x: "Occurrence", y: occurrenceCount }, { x: "Unspecified", y: unspecifiedCount }];
+        return [{ x: "Items", y: itemCount }, { x: "Weight/vol", y: wtVolCount }, { x: "Occurrence", y: occurrenceCount }, { x: "Unspecified", y: unspecifiedCount }];
     }
 
     @Query(() => [String])
