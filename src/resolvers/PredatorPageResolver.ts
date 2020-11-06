@@ -219,11 +219,11 @@ export class PredatorPageResolver {
         `;
 
         const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_season`);
-        let summer: graphXY =  { x: "summer", y: 0 };
-        let spring: graphXY =  { x: "spring", y: 0 };
-        let fall: graphXY =  { x: "fall", y: 0 };
-        let winter: graphXY =  { x: "winter", y: 0 };
-        let multipleUnspecified: graphXY =  { x: "multiple/unspecified", y: 0 };
+        let summer: graphXY =  { x: "Summer", y: 0 };
+        let spring: graphXY =  { x: "Spring", y: 0 };
+        let fall: graphXY =  { x: "Fall", y: 0 };
+        let winter: graphXY =  { x: "Winter", y: 0 };
+        let multipleUnspecified: graphXY =  { x: "Unspecified", y: 0 };
 
         for (let item of rawResult) {
             if (String(item["season"]).includes('summer')) {
