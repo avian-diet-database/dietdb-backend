@@ -1,4 +1,5 @@
-import Utils from "../utils"
+import 'reflect-metadata';
+import { Utils } from "../utils"
 
 describe('getUnidTaxon', () => {
     it("prepend Unid preylevel kingdom", async () => {

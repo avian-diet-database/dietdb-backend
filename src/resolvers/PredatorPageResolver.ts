@@ -1,7 +1,7 @@
 import { IsIn } from "class-validator";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
-import Utils from "../utils"
+import { Utils, StudiesAndRecordsCount } from "../utils"
 
 @ArgsType()
 class GetPreyOfArgs {
@@ -37,15 +37,6 @@ export class graphXY {
 
     @Field()
     y: number;
-}
-
-@ObjectType()
-export class StudiesAndRecordsCount {
-    @Field()
-    studies: string;
-
-    @Field()
-    records: string;
 }
 
 @ObjectType()

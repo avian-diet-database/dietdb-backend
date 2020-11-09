@@ -1,4 +1,6 @@
-export default class Utils {
+import { Field, ObjectType } from "type-graphql";
+
+export class Utils {
     // Assumes preyLevel is one of the 8 valid prey levels
     // This should be checked before use of function
     static getUnidTaxon(preyLevel: string) {
@@ -35,4 +37,13 @@ export default class Utils {
         initialLeft = "IFNULL(prey_scientific_name, ";
         return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
     }
+}
+
+@ObjectType()
+export class StudiesAndRecordsCount {
+    @Field()
+    studies: string;
+
+    @Field()
+    records: string;
 }
