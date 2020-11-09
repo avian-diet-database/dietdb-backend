@@ -2,7 +2,7 @@ import { Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 
 @ObjectType()
-export class DatabaseResultStats {
+export class AvianTableStats {
     @Field()
     numSpecies: string;
 
@@ -15,8 +15,8 @@ export class DatabaseResultStats {
 
 @Resolver()
 export class HomePageResolver {
-    @Query(() => DatabaseResultStats)
-    async getDatabaseStats() {
+    @Query(() => AvianTableStats)
+    async getAvianTableStats() {
         const speciesCount = await getManager().query("SELECT COUNT(DISTINCT common_name) as count FROM avian_diet");
         const studiesCount = await getManager().query("SELECT COUNT(DISTINCT source) as count FROM avian_diet");
         const recordsCount = await getManager().query("SELECT COUNT(*) as count FROM avian_diet");
