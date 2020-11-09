@@ -1,6 +1,7 @@
 import { IsIn } from "class-validator";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
+import { StudiesAndRecordsCount } from "../utils";
 
 // For prey page, we list predators
 @ArgsType()
@@ -139,5 +140,27 @@ export class PreyPageResolver {
             }
         }
         return regionList;
+    }
+
+    @Query(() => StudiesAndRecordsCount)
+    async getNumRecordsAndStudiesPrey(
+        @Arg("name") name: string
+    ) {
+        const studiesQuery = `
+        SELECT COUNT(*) as numRecords, COUNT(DISTINCT source) AS numStudies FROM avian_diet WHERE
+            prey_kingdom = "${name}" OR
+            prey_phylum = "${name}" OR
+            prey_class = "${name}" OR
+            prey_order = "${name}" OR
+            prey_suborder = "${name}" OR
+            prey_family = "${name}" OR
+            prey_genus = "${name}" OR
+            prey_scientific_name = "${name}%"
+        `;
+        const rawResult = await getManager().query(studiesQuery);
+        return {
+            studies: rawResult[0]["numStudies"],
+            records: rawResult[0]["numRecords"]
+        };
     }
 }
