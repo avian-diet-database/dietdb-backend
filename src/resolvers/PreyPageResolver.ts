@@ -113,4 +113,31 @@ export class PreyPageResolver {
         }
         return resultList;
     }
+
+    @Query(() => [String])
+    async getRegionsPrey(
+        @Arg("name") name: string
+    ) {
+        const query = `
+        SELECT DISTINCT location_region as region FROM avian_diet WHERE
+            prey_kingdom = "${name}" OR
+            prey_phylum = "${name}" OR
+            prey_class = "${name}" OR
+            prey_order = "${name}" OR
+            prey_suborder = "${name}" OR
+            prey_family = "${name}" OR
+            prey_genus = "${name}" OR
+            prey_scientific_name = "${name}%"
+        `;
+
+        const rawResult = await getManager().query(query);
+        let regionList = new Set();
+        for (let item of rawResult) {
+            let regions = item["region"].split(';');
+            for (let region of regions) {
+                regionList.add(region);
+            }
+        }
+        return regionList;
+    }
 }
