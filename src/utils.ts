@@ -47,3 +47,15 @@ export class StudiesAndRecordsCount {
     @Field()
     records: string;
 }
+
+@ObjectType()
+export class FilterValues {
+    @Field(() => [String])
+    regions: string[];
+
+    @Field(() => [String])
+    startYears: string[];
+
+    @Field(() => [String])
+    endYears: string[];
+}

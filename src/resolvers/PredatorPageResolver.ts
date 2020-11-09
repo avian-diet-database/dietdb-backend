@@ -1,7 +1,7 @@
 import { IsIn } from "class-validator";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
-import { Utils, StudiesAndRecordsCount } from "../utils"
+import { Utils, StudiesAndRecordsCount, FilterValues } from "../utils"
 
 @ArgsType()
 class GetPreyOfArgs {
@@ -313,24 +313,41 @@ export class PredatorPageResolver {
         return [{ x: "Items", y: itemCount }, { x: "Weight/vol", y: wtVolCount }, { x: "Occurrence", y: occurrenceCount }, { x: "Unspecified", y: unspecifiedCount }];
     }
 
-    @Query(() => [String])
-    async getRegionsPred(
+    @Query(() => FilterValues)
+    async getFilterValuesPred(
         @Arg("name") name: string
     ) {
-        const query = `
+        const regionQuery = `
         SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
         `;
+        const startYearQuery = `
+        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        `;
+        const endYearQuery = `
+        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        `;
 
-        const rawResult = await getManager().query(query);
+        const regionRawResult = await getManager().query(regionQuery);
+        const startYearRawResult = await getManager().query(startYearQuery);
+        const endYearRawResult = await getManager().query(endYearQuery);
+        let startYearsList = [];
+        let endYearsList = [];
         let regionList = new Set();
-        for (let item of rawResult) {
+        for (let item of regionRawResult) {
             let regions = item["region"].split(';');
             for (let region of regions) {
                 regionList.add(region);
             }
         }
-        return regionList;
+        for (let item of startYearRawResult) {
+            startYearsList.push(item["startYear"]);
+        }
+        for (let item of endYearRawResult) {
+            endYearsList.push(item["endYear"]);
+        }
+        return { regions: regionList, startYears: startYearsList, endYears: endYearsList };
     }
+
     
     @Query(() => [regionCountTuple])
     async getMapData(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {

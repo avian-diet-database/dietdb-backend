@@ -185,18 +185,6 @@ describe('getRecordsPerDietType', () => {
     });
 });
 
-describe('getRegionsPred', () => {
-    it("get list of regions", async () => {
-        const response = await gCall({
-            source: GET_REGIONS_PRED,
-            variableValues: {
-                name: "Bald Eagle"
-            }
-        });
-        expect(response["data"]!.getRegionsPred.length).toBe(25);
-    });
-});
-
 describe('getMapData', () => {
     it("get state record number", async () => {
         const response = await gCall({
