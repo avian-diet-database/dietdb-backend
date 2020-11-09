@@ -127,7 +127,7 @@ export class PreyPageResolver {
             prey_suborder = "${name}" OR
             prey_family = "${name}" OR
             prey_genus = "${name}" OR
-            prey_scientific_name = "${name}%"
+            prey_scientific_name = "${name}"
         `;
         const regionQuery = `
         SELECT DISTINCT location_region as region FROM avian_diet WHERE ${preyFilter}
@@ -173,7 +173,7 @@ export class PreyPageResolver {
             prey_suborder = "${name}" OR
             prey_family = "${name}" OR
             prey_genus = "${name}" OR
-            prey_scientific_name = "${name}%"
+            prey_scientific_name = "${name}"
         `;
         const rawResult = await getManager().query(studiesQuery);
         return {
