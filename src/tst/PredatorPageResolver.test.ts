@@ -1,6 +1,6 @@
 import { Connection } from "typeorm";
 import { gCall } from "./tst-utils/gCall";
-import { GET_AUTOCOMPLETE_PRED, GET_MAP_DATA, GET_NUM_RECORDS_AND_STUDIES, GET_PREY_OF, GET_PREY_OF_SOURCES, GET_REGIONS_PRED, RECORDS_PER_DECADE, RECORDS_PER_DIET_TYPE, RECORDS_PER_SEASON } from "./tst-utils/queries";
+import { GET_AUTOCOMPLETE_PRED, GET_MAP_DATA, GET_NUM_RECORDS_AND_STUDIES, GET_PREY_OF, GET_PREY_OF_SOURCES, RECORDS_PER_DECADE, RECORDS_PER_DIET_TYPE, RECORDS_PER_SEASON } from "./tst-utils/queries";
 import { testConn } from "./tst-utils/testConn";
 
 let conn: Connection;

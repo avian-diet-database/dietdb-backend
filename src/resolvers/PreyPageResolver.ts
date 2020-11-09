@@ -1,7 +1,7 @@
 import { IsIn } from "class-validator";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
-import { StudiesAndRecordsCount } from "../utils";
+import { FilterValues, StudiesAndRecordsCount } from "../utils";
 
 // For prey page, we list predators
 @ArgsType()
@@ -115,12 +115,11 @@ export class PreyPageResolver {
         return resultList;
     }
 
-    @Query(() => [String])
-    async getRegionsPrey(
+    @Query(() => FilterValues)
+    async getFilterValuesPrey(
         @Arg("name") name: string
     ) {
-        const query = `
-        SELECT DISTINCT location_region as region FROM avian_diet WHERE
+        const preyFilter = `
             prey_kingdom = "${name}" OR
             prey_phylum = "${name}" OR
             prey_class = "${name}" OR
@@ -130,16 +129,35 @@ export class PreyPageResolver {
             prey_genus = "${name}" OR
             prey_scientific_name = "${name}%"
         `;
+        const regionQuery = `
+        SELECT DISTINCT location_region as region FROM avian_diet WHERE ${preyFilter}
+        `;
+        const startYearQuery = `
+        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE ${preyFilter}
+        `;
+        const endYearQuery = `
+        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE ${preyFilter}
+        `;
 
-        const rawResult = await getManager().query(query);
+        const regionRawResult = await getManager().query(regionQuery);
+        const startYearRawResult = await getManager().query(startYearQuery);
+        const endYearRawResult = await getManager().query(endYearQuery);
+        let startYearsList = [];
+        let endYearsList = [];
         let regionList = new Set();
-        for (let item of rawResult) {
+        for (let item of regionRawResult) {
             let regions = item["region"].split(';');
             for (let region of regions) {
                 regionList.add(region);
             }
         }
-        return regionList;
+        for (let item of startYearRawResult) {
+            startYearsList.push(item["startYear"]);
+        }
+        for (let item of endYearRawResult) {
+            endYearsList.push(item["endYear"]);
+        }
+        return { regions: regionList, startYears: startYearsList, endYears: endYearsList };
     }
 
     @Query(() => StudiesAndRecordsCount)
