@@ -1,18 +1,13 @@
-import { Field, Int, ObjectType } from "type-graphql";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@ObjectType()
 @Entity()
 export class AvianDiet extends BaseEntity {
-    @Field()
     @PrimaryGeneratedColumn()
     unique_id: number;
 
-    @Field()
     @Column()
     common_name: string;
 
-    @Field()
     @Column({ nullable: true })
     scientific_name: string;
 
@@ -40,7 +35,6 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     altitude_mean_m: string;
 
-    @Field()
     @Column()
     location_region: string;
 
@@ -50,58 +44,45 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     habitat_type: string;
 
-    @Field()
     @Column({ nullable: true })
     observation_month_begin: number;
 
-    @Field()
     @Column({ nullable: true })
     observation_month_end: number;
 
-    @Field(() => Int)
     @Column({ nullable: true })
     observation_year_begin: number;
 
-    @Field(() => Int)
     @Column({ nullable: true })
     observation_year_end: number;
 
-    @Field()
     @Column({ nullable: true })
     observation_season: string;
 
     @Column({ nullable: true })
     analysis_number: string;
 
-    @Field()
     @Column()
     prey_kingdom: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_phylum: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_class: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_order: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_suborder: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_family: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_genus: string;
 
-    @Field()
     @Column({ nullable: true })
     prey_scientific_name: string;
 
@@ -123,11 +104,9 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     prey_common_name: string;
 
-    @Field()
     @Column({ nullable: true })
     fraction_diet: string;
 
-    @Field()
     @Column()
     diet_type: string;
 
@@ -149,7 +128,6 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     entered_by: string;
 
-    @Field()
     @Column()
     source: string;
 }
