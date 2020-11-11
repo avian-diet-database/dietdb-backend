@@ -11,14 +11,14 @@ Data sourced from https://github.com/ahhurlbert/aviandietdb
 
 # Getting Started
 
-## Prerequisite 
+### Prerequisite 
 - [git](https://git-scm.com/downloads)
   - not necessary, just to clone project if wanting to
 - [node](https://nodejs.org/en/)
 - [MySQL](https://www.mysql.com/downloads/)
   - If wanting to run locally, otherwise can use database set up somewhere else
 
-## Installation
+### Installation
 1. clone repo
 ```
 git clone git@github.com:COMP523FA2020/Backend.git
@@ -28,7 +28,7 @@ git clone git@github.com:COMP523FA2020/Backend.git
 npm install
 ```
 
-## Running Locally
+### Running Locally
 1. Start up MySQL
  - There are several ways to start up the local MySQL server, and can vary by OS. Please read the MySQL docs for information relevant to you https://dev.mysql.com/
 3. Create a database if there is not on already set up. Follow the MySQL docs.
@@ -55,7 +55,7 @@ Start a node server from src/index.ts without watching for changes.
 
 Start a tsc server which watches the src folder and compiles to the dist folder. 
 
-### Recommended: 
+#### Recommended: 
 1. npm run watch
 2. in another terminal, npm run devJS
 
