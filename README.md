@@ -87,6 +87,8 @@ There is currently no automated testing during.
 - Jest
 - MySQL
 
+Project ADR under (ADR.md)[https://github.com/COMP523FA2020/Backend/blob/master/ADR.md] in project root directory.
+
 # Contributing
 Please contact https://bio.unc.edu/faculty-profile/hurlbert/ before attempting to contribute
 
