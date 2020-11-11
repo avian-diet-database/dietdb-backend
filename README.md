@@ -6,7 +6,7 @@ Types of data served includes:
 - Data for graphs on web page
 - Database stats for webpage
 
-Data sourced from https://github.com/ahhurlbert/aviandietdb
+Data sourced from https://github.com/hurlbertlab/dietdatabase and https://github.com/ahhurlbert/aviandietdb
 - This project will create the MySQL table in a database (via TypeORM migration), but does **not** come with actual data
 
 # Getting Started
