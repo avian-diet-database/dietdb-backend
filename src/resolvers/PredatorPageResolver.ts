@@ -187,7 +187,7 @@ export class PredatorPageResolver {
     }
 
     @Query(() => StudiesAndRecordsCount)
-    async getNumRecordsAndStudies(
+    async getNumRecordsAndStudiesPred(
         @Arg("name") name: string
     ) {
         const numStudies = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
