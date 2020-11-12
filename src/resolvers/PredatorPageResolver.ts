@@ -324,7 +324,7 @@ export class PredatorPageResolver {
         SELECT DISTINCT location_region AS region FROM avian_diet A WHERE common_name = "${name}" OR scientific_name = "${name}"
         `;
         const acceptableRegionsQuery = `
-        SELECT region_name AS region FROM region
+        SELECT region_name AS region FROM regions
         `;
         const startYearQuery = `
         SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" ORDER BY startYear ASC

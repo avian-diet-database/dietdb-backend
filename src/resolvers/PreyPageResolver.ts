@@ -136,7 +136,7 @@ export class PreyPageResolver {
         SELECT DISTINCT location_region as region FROM avian_diet WHERE ${preyFilter}
         `;
         const acceptableRegionsQuery = `
-        SELECT region_name AS region FROM region
+        SELECT region_name AS region FROM regions
         `;
         const startYearQuery = `
         SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE ${preyFilter} ORDER BY startYear ASC
