@@ -321,10 +321,10 @@ export class PredatorPageResolver {
         SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
         `;
         const startYearQuery = `
-        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" ORDER BY startYear ASC
         `;
         const endYearQuery = `
-        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" ORDER BY endYear DESC
         `;
 
         const regionRawResult = await getManager().query(regionQuery);
