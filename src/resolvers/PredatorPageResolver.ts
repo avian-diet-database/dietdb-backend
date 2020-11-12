@@ -313,12 +313,18 @@ export class PredatorPageResolver {
         return [{ x: "Items", y: itemCount }, { x: "Weight/vol", y: wtVolCount }, { x: "Occurrence", y: occurrenceCount }, { x: "Unspecified", y: unspecifiedCount }];
     }
 
+    // Right now, this function will create a new set every time it is called to check that regions grabbed from the avian_diet table is in the acceptable region list in the region table
+    // This is extremely inefficient
+    // Assumes that regions from avian_diet has the same capitilization as regions in region table
     @Query(() => FilterValues)
     async getFilterValuesPred(
         @Arg("name") name: string
     ) {
         const regionQuery = `
-        SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
+        SELECT DISTINCT location_region AS region FROM avian_diet A WHERE common_name = "${name}" OR scientific_name = "${name}"
+        `;
+        const acceptableRegionsQuery = `
+        SELECT region_name AS region FROM region
         `;
         const startYearQuery = `
         SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}" ORDER BY startYear ASC
@@ -328,15 +334,22 @@ export class PredatorPageResolver {
         `;
 
         const regionRawResult = await getManager().query(regionQuery);
+        const acceptableRegionsRawResult = await getManager().query(acceptableRegionsQuery);
         const startYearRawResult = await getManager().query(startYearQuery);
         const endYearRawResult = await getManager().query(endYearQuery);
+        let acceptableRegions = new Set();
         let startYearsList = [];
         let endYearsList = [];
         let regionList = new Set();
+        for (let item of acceptableRegionsRawResult) {
+            acceptableRegions.add(item["region"]);
+        }
         for (let item of regionRawResult) {
             let regions = item["region"].split(';');
             for (let region of regions) {
-                regionList.add(region);
+                if (acceptableRegions.has(region)) {
+                    regionList.add(region);
+                }
             }
         }
         for (let item of startYearRawResult) {
