@@ -139,10 +139,10 @@ export class PreyPageResolver {
         SELECT region_name AS region FROM regions
         `;
         const startYearQuery = `
-        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE ${preyFilter} ORDER BY startYear ASC
+        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE (${preyFilter}) AND observation_year_end IS NOT NULL ORDER BY startYear ASC
         `;
         const endYearQuery = `
-        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE ${preyFilter} ORDER BY endYear DESC
+        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE (${preyFilter}) AND observation_year_end IS NOT NULL ORDER BY endYear DESC
         `;
 
         const regionRawResult = await getManager().query(regionQuery);
