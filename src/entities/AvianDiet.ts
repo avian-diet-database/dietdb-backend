@@ -122,12 +122,12 @@ export class AvianDiet extends BaseEntity {
     @Column({ nullable: true })
     study_type: string;
 
-    @Column({ length: 400, nullable: true })
+    @Column({ length: 500, nullable: true })
     notes: string;
 
     @Column({ nullable: true })
     entered_by: string;
 
-    @Column()
+    @Column({ length: 500 })
     source: string;
 }
