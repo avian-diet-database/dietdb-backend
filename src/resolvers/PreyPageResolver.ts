@@ -64,7 +64,7 @@ export class PreyPageResolver {
 
         const query = `
         SELECT
-                common_name, family, diet_type, AVG(fraction_diet) AS fraction_diet, COUNT(DISTINCT source) AS number_of_studies
+                common_name, family, diet_type, AVG(fraction_diet) * 100.0 AS fraction_diet, COUNT(DISTINCT source) AS number_of_studies
         FROM
             (SELECT
                 common_name, family, diet_type, source,
