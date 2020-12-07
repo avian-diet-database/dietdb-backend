@@ -1,5 +1,5 @@
 # Avian Diet Database Backend
-A GraphQL server for serving data to the Avian Diet Database web page https://github.com/COMP523FA2020/Frontend
+A GraphQL server for serving data to the Avian Diet Database web page (frontend code located [here](https://github.com/avian-diet-database/dietdb-frontend) 
 Types of data served includes:
 - Diet breakdown for specific birds
 - Predator breakdown for specific bird prey
@@ -21,7 +21,7 @@ Data sourced from https://github.com/hurlbertlab/dietdatabase and https://github
 ### Installation
 1. clone repo
 ```
-git clone git@github.com:COMP523FA2020/Backend.git
+git clone git@github.com:avian-diet-database/dietdb-backend.git
 ```
 2. run npm in project directory to install libraries
 ```
@@ -87,12 +87,12 @@ There is currently no automated testing during.
 - Jest
 - MySQL
 
-Project ADR under (ADR.md)[https://github.com/COMP523FA2020/Backend/blob/master/ADR.md] in project root directory.
+Project ADR under (ADR.md)[https://github.com/avian-diet-database/dietdb-backend/blob/master/ADR.md] in project root directory.
 
 # Contributing
 Please contact https://bio.unc.edu/faculty-profile/hurlbert/ before attempting to contribute
 
-After gaining permission, will need to be added to https://github.com/COMP523FA2020 with proper permissions to commit code.
+After gaining permission, will need to be added to https://github.com/avian-diet-database/ with proper permissions to commit code.
 
 Will also need access to project on https://cloudapps.unc.edu/ to view status of deployment or modify settings.
 
