@@ -41,7 +41,6 @@ describe('getPreyOf', () => {
             variableValues: {
                 name: "Bald Eagle",
                 level: "suborder",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",
@@ -68,7 +67,6 @@ describe('getPreyOfSources', () => {
             source: GET_PREY_OF_SOURCES,
             variableValues: {
                 name: "Bald Eagle",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",
@@ -120,7 +118,6 @@ describe('getRecordsPerSeason', () => {
             source: RECORDS_PER_SEASON,
             variableValues: {
                 name: "Bald Eagle",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",
@@ -147,7 +144,6 @@ describe('getRecordsPerDecade', () => {
             source: RECORDS_PER_DECADE,
             variableValues: {
                 name: "Bald Eagle",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",
@@ -174,7 +170,6 @@ describe('getRecordsPerDietType', () => {
             source: RECORDS_PER_DIET_TYPE,
             variableValues: {
                 name: "Bald Eagle",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",
@@ -201,7 +196,6 @@ describe('getMapData', () => {
             source: GET_MAP_DATA,
             variableValues: {
                 name: "Bald Eagle",
-                metrics: "occurrence",
                 startYear: "2000",
                 endYear: "2020",
                 season: "spring",

@@ -12,6 +12,7 @@ class GetPreyOfArgs {
     @IsIn(["kingdom", "phylum", "class", "order", "suborder", "family", "genus", "scientific_name"])
     preyLevel: string;
 
+    //TODO: Remove this field, no longer used
     @Field({ defaultValue: "all"})
     @IsIn(["wt_or_vol", "items", "occurrence", "unspecified", "all"])
     dietType: string;
@@ -69,7 +70,7 @@ export class Prey {
 @Resolver()
 export class PredatorPageResolver {
     @Query(() => [Prey])
-    async getPreyOf(@Args() {predatorName, preyLevel, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+    async getPreyOf(@Args() {predatorName, preyLevel, startYear, endYear, season, region}: GetPreyOfArgs) {
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
@@ -79,11 +80,7 @@ export class PredatorPageResolver {
         `;
 
         const query = `
-        SELECT taxon
-            ${dietType === "all" || dietType == "items" ? ", SUM(Items) as items" : "" }
-            ${dietType === "all" || dietType == "wt_or_vol" ? ", SUM(Wt_or_Vol) as wt_or_vol" : "" }
-            ${dietType === "all" || dietType == "occurrence" ? ", SUM(Occurrence) as occurrence" : "" }
-            ${dietType === "all" || dietType == "unspecified" ? ", SUM(Unspecified) as unspecified" : "" }
+        SELECT taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified
         FROM
             (SELECT taxon, final1.diet_type,
                 SUM(Items) * 100.0 / n as Items,
@@ -126,11 +123,6 @@ export class PredatorPageResolver {
             GROUP BY taxon, diet_type
         ) final2
         GROUP BY taxon
-        ${dietType !== "all" ? "HAVING" : ""} 
-            ${dietType == "items" ? "SUM(Items) IS NOT NULL" : "" }
-            ${dietType == "wt_or_vol" ? "SUM(Wt_or_Vol) IS NOT NULL" : "" }
-            ${dietType == "occurrence" ? "SUM(Occurrence) IS NOT NULL" : "" }
-            ${dietType == "unspecified" ? "SUM(Unspecified) IS NOT NULL" : "" }
         `;
 
         return await getManager().query(query);
@@ -139,14 +131,13 @@ export class PredatorPageResolver {
     // Assumes sources will never be empty/null in database
     // Prey Level doesn't matter since we will always include a record regardless of level, we prepend 'Unid.' with the next lowest level, see getPreyOf query for more detail
     @Query(() => [String])
-    async getPreyOfSources(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {            
+    async getPreyOfSources(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {            
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
         const query = `
@@ -199,14 +190,13 @@ export class PredatorPageResolver {
     }
 
     @Query(() => [graphXY])
-    async getRecordsPerSeason(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+    async getRecordsPerSeason(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
         const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_season`);
@@ -238,14 +228,13 @@ export class PredatorPageResolver {
 
     // Only includes decades with actual data points
     @Query(() => [graphXY])
-    async getRecordsPerDecade(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {            
+    async getRecordsPerDecade(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {            
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
         const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} AND observation_year_end IS NOT NULL GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
@@ -274,14 +263,13 @@ export class PredatorPageResolver {
     }
 
     @Query(() => [graphXY])
-    async getRecordsPerDietType(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+    async getRecordsPerDietType(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
         const rawResult = await getManager().query(`SELECT diet_type as diet, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY diet_type`);
@@ -363,14 +351,13 @@ export class PredatorPageResolver {
 
     
     @Query(() => [regionCountTuple])
-    async getMapData(@Args() {predatorName, dietType, startYear, endYear, season, region}: GetPreyOfArgs) {
+    async getMapData(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
         const argConditions = `
         (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
         ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
         ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
         ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
         ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        ${dietType !== "all" ? " AND diet_type = \"" + dietType + "\"" : ""}
         `;
 
         const query = `SELECT location_region as region, COUNT(location_region) as count FROM avian_diet WHERE ${argConditions} GROUP BY location_region`;
