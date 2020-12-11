@@ -89,7 +89,7 @@ export class PredatorPageResolver {
 
         // For each of those specific prey of a specific study, group them and sum together the diet, separating by type
         // If preyLevel is lower than prey class, we append the prey_stage to the prey name
-        let qbInitialSum = getManager()
+        const qbInitialSum = getManager()
             .createQueryBuilder()
             .select(`diet_type,
                 ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
@@ -102,7 +102,7 @@ export class PredatorPageResolver {
             .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type");
 
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
-        let totalPerDietType = getManager()
+        const totalPerDietType = getManager()
             .createQueryBuilder()
             .select("diet_type, COUNT(*) as n")
             .from(subQuery => {
@@ -113,7 +113,7 @@ export class PredatorPageResolver {
             .groupBy("diet_type");
         
         // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
-        let qbInitialPercentage = getManager()
+        const qbInitialPercentage = getManager()
             .createQueryBuilder()
             .select("taxon, final1.diet_type, SUM(Items) * 100.0 / n as Items, SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol, SUM(Occurrence) * 100.0 / n as Occurrence, SUM(Unspecified) * 100.0 / n as Unspecified")
             .from("(" + qbInitialSum.getQuery() + ")", "final1")
@@ -124,7 +124,7 @@ export class PredatorPageResolver {
             .setParameters(totalPerDietType.getParameters());
         
         // There are multiple records for a single prey since each record corresponds to one of the four diet types. This will group those records together so we end up having one record with four filled out columns for each diet type
-        let finalCombine = await getManager()
+        const finalCombine = await getManager()
             .createQueryBuilder()
             .select("taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified")
             .from("(" + qbInitialPercentage.getQuery() + ")", "final2")
