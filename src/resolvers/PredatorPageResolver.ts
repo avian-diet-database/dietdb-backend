@@ -77,7 +77,7 @@ export class PredatorPageResolver {
         // Selecting columns that identifies a specific prey of a specific study and creating new columns for each of the four diet types
         let qbInitialSplit = getManager()
             .createQueryBuilder()
-            .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage,
+            .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage, analysis_number,
                 ${Utils.getUnidTaxon("prey_" + preyLevel)} AS taxonUnid,
 			    IF(diet_type = "Items", fraction_diet, NULL) as Items,
 			    IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) as Wt_or_Vol,
@@ -99,7 +99,7 @@ export class PredatorPageResolver {
                 SUM(Unspecified) as Unspecified
             `)
             .from("(" + qbInitialSplit.getQuery() + ")", "initialSplit")
-            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type");
+            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number");
 
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
         const totalPerDietType = getManager()
@@ -107,7 +107,7 @@ export class PredatorPageResolver {
             .select("diet_type, COUNT(*) as n")
             .from(subQuery => {
                 return Utils.addArgConditions(subQuery
-                .select("DISTINCT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type")
+                .select("DISTINCT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, analysis_number")
                 .from(AvianDiet, "avian"), predatorName, season, region, startYear, endYear);
             }, "distinctCombo")
             .groupBy("diet_type");
