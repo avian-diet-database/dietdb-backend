@@ -1,4 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
+import { SelectQueryBuilder } from "typeorm";
 
 export class Utils {
     // Assumes preyLevel is one of the 8 valid prey levels
@@ -36,6 +37,25 @@ export class Utils {
         initialRight = initialLeft + initialRight + ")";
         initialLeft = "IFNULL(prey_scientific_name, ";
         return `${initialLeft}CONCAT("Unid. ", ${initialRight})`;
+    }
+
+    static addArgConditions(qb: SelectQueryBuilder<any>, predatorName: string, season: string, region: string, startYear?: string, endYear?: string) {
+        qb = qb.where("avian.common_name = :name", { name: predatorName })
+            .orWhere("avian.scientific_name = :name", { name: predatorName });
+
+        if (startYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_begin >= :startYear", { startYear: startYear });
+        }
+        if (endYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_end <= :endYear", { endYear: endYear });
+        }
+        if (season !== "all") {
+            qb = qb.andWhere("avian.observation_season LIKE :season", { season: "%" + season + "%" });
+        }
+        if (region !== "all") {
+            qb = qb.andWhere("avian.location_region LIKE :region", { region: "%" + region + "%" });
+        }
+        return qb;
     }
 }
 

@@ -1,4 +1,5 @@
 import { IsIn } from "class-validator";
+import { AvianDiet } from "../entities/AvianDiet";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import { Utils, StudiesAndRecordsCount, FilterValues } from "../utils"
@@ -69,63 +70,69 @@ export class Prey {
 
 @Resolver()
 export class PredatorPageResolver {
+    // Only have to worry about securing values against SQL injection for those not checked by GetPreyOfArgs
+    // That is: predatorName, startYear, endYear, region
     @Query(() => [Prey])
     async getPreyOf(@Args() {predatorName, preyLevel, startYear, endYear, season, region}: GetPreyOfArgs) {
-        const argConditions = `
-        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        // Selecting columns that identifies a specific prey of a specific study and creating new columns for each of the four diet types
+        let qbInitialSplit = getManager()
+            .createQueryBuilder()
+            .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage,
+                ${Utils.getUnidTaxon("prey_" + preyLevel)} AS taxonUnid,
+			    IF(diet_type = "Items", fraction_diet, NULL) as Items,
+			    IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) as Wt_or_Vol,
+			    IF(diet_type = "Occurrence", fraction_diet, NULL) as Occurrence,
+                IF(diet_type = "Unspecified", fraction_diet, NULL) as Unspecified
+            `)
+            .from(AvianDiet, "avian");
+        qbInitialSplit = Utils.addArgConditions(qbInitialSplit, predatorName, season, region, startYear, endYear);
 
-        const query = `
-        SELECT taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified
-        FROM
-            (SELECT taxon, final1.diet_type,
-                SUM(Items) * 100.0 / n as Items,
-                SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol,
-                SUM(Occurrence) * 100.0 / n as Occurrence,
-                SUM(Unspecified) * 100.0 / n as Unspecified
-            FROM
-                (SELECT diet_type,
-                    ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
-                    SUM(Items) as Items,
-                    SUM(Wt_or_Vol) as Wt_or_Vol,
-                    MAX(Occurrence) as Occurrence,
-                    SUM(Unspecified) as Unspecified
-                FROM
-		            (SELECT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage,
-			            ${Utils.getUnidTaxon("prey_" + preyLevel)} AS taxonUnid,
-			            IF(diet_type = "Items", fraction_diet, NULL) as Items,
-			            IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) as Wt_or_Vol,
-			            IF(diet_type = "Occurrence", fraction_diet, NULL) as Occurrence,
-                        IF(diet_type = "Unspecified", fraction_diet, NULL) as Unspecified
-                    FROM avian_diet
-                    WHERE ${argConditions}
-                    ) AS final0
-                GROUP BY source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type
-            ) final1,
-            (SELECT diet_type, COUNT(*) AS n
-		    FROM
-			    (SELECT DISTINCT *
-				FROM
-					(SELECT *
-                    FROM
-						(SELECT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type
-                        FROM avian_diet
-                        WHERE ${argConditions}
-                        ) AS dietspUnid)
-                    AS dietsp)
-                AS distinctCombo GROUP BY diet_type
-            ) totalPerDietType
-            WHERE totalPerDietType.diet_type = final1.diet_type
-            GROUP BY taxon, diet_type
-        ) final2
-        GROUP BY taxon
-        `;
+        // For each of those specific prey of a specific study, group them and sum together the diet, separating by type
+        // If preyLevel is lower than prey class, we append the prey_stage to the prey name
+        let qbInitialSum = getManager()
+            .createQueryBuilder()
+            .select(`diet_type,
+                ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
+                SUM(Items) as Items,
+                SUM(Wt_or_Vol) as Wt_or_Vol,
+                MAX(Occurrence) as Occurrence,
+                SUM(Unspecified) as Unspecified
+            `)
+            .from("(" + qbInitialSplit.getQuery() + ")", "final0")
+            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type");
 
-        return await getManager().query(query);
+        // Group together the columns that identify unique prey studies and count number of records that each has per diet type
+        let totalPerDietType = getManager()
+            .createQueryBuilder()
+            .select("diet_type, COUNT(*) as n")
+            .from(subQuery => {
+                return Utils.addArgConditions(subQuery
+                .select("DISTINCT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type")
+                .from(AvianDiet, "avian"), predatorName, season, region, startYear, endYear);
+            }, "distinctCombo")
+            .groupBy("diet_type");
+        
+        // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
+        let qbInitialPercentage = getManager()
+            .createQueryBuilder()
+            .select("taxon, final1.diet_type, SUM(Items) * 100.0 / n as Items, SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol, SUM(Occurrence) * 100.0 / n as Occurrence, SUM(Unspecified) * 100.0 / n as Unspecified")
+            .from("(" + qbInitialSum.getQuery() + ")", "final1")
+            .from("(" + totalPerDietType.getQuery() + ")", "totalPerDietType")
+            .where("totalPerDietType.diet_type = final1.diet_type")
+            .groupBy("taxon, diet_type")
+            .setParameters(qbInitialSum.getParameters())
+            .setParameters(totalPerDietType.getParameters());
+        
+        // There are multiple records for a single prey since each record corresponds to one of the four diet types. This will group those records together so we end up having one record with four filled out columns for each diet type
+        let finalCombine = await getManager()
+            .createQueryBuilder()
+            .select("taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified")
+            .from("(" + qbInitialPercentage.getQuery() + ")", "final2")
+            .groupBy("taxon")
+            .setParameters(qbInitialPercentage.getParameters())
+            .getRawMany();
+        
+        return finalCombine;
     }
 
     // Assumes sources will never be empty/null in database
