@@ -139,20 +139,13 @@ export class PredatorPageResolver {
     // Prey Level doesn't matter since we will always include a record regardless of level, we prepend 'Unid.' with the next lowest level, see getPreyOf query for more detail
     @Query(() => [String])
     async getPreyOfSources(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {            
-        const argConditions = `
-        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        let qb = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT source")
+            .from(AvianDiet, "avian");
+        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear);
 
-        const query = `
-		SELECT DISTINCT source
-        FROM avian_diet
-        WHERE ${argConditions}
-        `;
-        const rawResult = await getManager().query(query);
+        const rawResult = await qb.getRawMany();
 
         let sourceList = [];
         for (let source of rawResult) {
