@@ -157,9 +157,7 @@ export class PredatorPageResolver {
 
     // Searches through common_name and scientific_name
     @Query(() => [String])
-    async getAutocompletePred(
-        @Arg("input") input: string
-    ) {
+    async getAutocompletePred(@Arg("input") input: string) {
         const query = `
         SELECT DISTINCT name FROM
 	        (SELECT DISTINCT common_name AS name FROM avian_diet WHERE common_name LIKE "%${input}%"
@@ -178,9 +176,7 @@ export class PredatorPageResolver {
     }
 
     @Query(() => StudiesAndRecordsCount)
-    async getNumRecordsAndStudiesPred(
-        @Arg("name") name: string
-    ) {
+    async getNumRecordsAndStudiesPred(@Arg("name") name: string) {
         const numStudies = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
         const numRecords = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
         return {
@@ -305,9 +301,7 @@ export class PredatorPageResolver {
     // This is extremely inefficient
     // Assumes that regions from avian_diet has the same capitilization as regions in region table
     @Query(() => FilterValues)
-    async getFilterValuesPred(
-        @Arg("name") name: string
-    ) {
+    async getFilterValuesPred(@Arg("name") name: string) {
         const regionQuery = `
         SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
         `;
