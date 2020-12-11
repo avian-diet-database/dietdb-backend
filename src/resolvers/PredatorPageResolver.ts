@@ -98,7 +98,7 @@ export class PredatorPageResolver {
                 MAX(Occurrence) as Occurrence,
                 SUM(Unspecified) as Unspecified
             `)
-            .from("(" + qbInitialSplit.getQuery() + ")", "final0")
+            .from("(" + qbInitialSplit.getQuery() + ")", "initialSplit")
             .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type");
 
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
@@ -115,10 +115,10 @@ export class PredatorPageResolver {
         // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
         const qbInitialPercentage = getManager()
             .createQueryBuilder()
-            .select("taxon, final1.diet_type, SUM(Items) * 100.0 / n as Items, SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol, SUM(Occurrence) * 100.0 / n as Occurrence, SUM(Unspecified) * 100.0 / n as Unspecified")
-            .from("(" + qbInitialSum.getQuery() + ")", "final1")
+            .select("taxon, initialSum.diet_type, SUM(Items) * 100.0 / n as Items, SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol, SUM(Occurrence) * 100.0 / n as Occurrence, SUM(Unspecified) * 100.0 / n as Unspecified")
+            .from("(" + qbInitialSum.getQuery() + ")", "initialSum")
             .from("(" + totalPerDietType.getQuery() + ")", "totalPerDietType")
-            .where("totalPerDietType.diet_type = final1.diet_type")
+            .where("totalPerDietType.diet_type = initialSum.diet_type")
             .groupBy("taxon, diet_type")
             .setParameters(qbInitialSum.getParameters())
             .setParameters(totalPerDietType.getParameters());
@@ -127,7 +127,7 @@ export class PredatorPageResolver {
         const finalCombine = await getManager()
             .createQueryBuilder()
             .select("taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified")
-            .from("(" + qbInitialPercentage.getQuery() + ")", "final2")
+            .from("(" + qbInitialPercentage.getQuery() + ")", "initialPercentage")
             .groupBy("taxon")
             .setParameters(qbInitialPercentage.getParameters())
             .getRawMany();
