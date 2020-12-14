@@ -371,17 +371,14 @@ export class PredatorPageResolver {
     
     @Query(() => [regionCountTuple])
     async getMapData(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
-        const argConditions = `
-        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        let qb = getManager()
+            .createQueryBuilder()
+            .select("location_region AS region, COUNT(location_region) AS count")
+            .from(AvianDiet, "avian");
+        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
+            .groupBy("location_region");
 
-        const query = `SELECT location_region as region, COUNT(location_region) as count FROM avian_diet WHERE ${argConditions} GROUP BY location_region`;
-
-        const rawResult = await getManager().query(query);
+        const rawResult = await qb.getRawMany();
         let regionCount = new Map();
         for (let item of rawResult) {
             let regions = item["region"].split(';');
