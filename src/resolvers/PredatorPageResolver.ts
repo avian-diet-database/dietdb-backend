@@ -230,16 +230,24 @@ export class PredatorPageResolver {
     // Only includes decades with actual data points
     @Query(() => [graphXY])
     async getRecordsPerDecade(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {            
-        const argConditions = `
-        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        let qbYears = getManager()
+            .createQueryBuilder()
+            .select("observation_year_end as year, COUNT(*) as count")
+            .from(AvianDiet, "avian");
+        qbYears = Utils.addArgConditions(qbYears, predatorName, season, region, startYear, endYear)
+            .andWhere("observation_year_end IS NOT NULL")
+            .groupBy("observation_year_end")
+            .orderBy("observation_year_end");
+        const rawResult = await qbYears.getRawMany();
 
-        const rawResult = await getManager().query(`SELECT observation_year_end as year, COUNT(*) as count FROM avian_diet WHERE ${argConditions} AND observation_year_end IS NOT NULL GROUP BY observation_year_end ORDER BY observation_year_end ASC`);
-        const minMaxDecades = await getManager().query(`SELECT MIN(observation_year_end) as min, MAX(observation_year_end) as max FROM avian_diet WHERE (common_name = "${predatorName}" OR scientific_name = "${predatorName}") AND observation_year_end IS NOT NULL`);
+        const minMaxDecades = await getManager()
+            .createQueryBuilder()
+            .select("MIN(observation_year_end) as min, MAX(observation_year_end) as max")
+            .from(AvianDiet, "avian")
+            .where("(common_name = :name OR scientific_name = :name)", { name: predatorName })
+            .andWhere("observation_year_end IS NOT NULL")
+            .getRawMany();
+
         const minDecade = Math.floor(+minMaxDecades[0]["min"] / 10) * 10;
         const maxDecade = Math.floor(+minMaxDecades[0]["max"] / 10) * 10;
 
