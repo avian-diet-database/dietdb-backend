@@ -239,7 +239,7 @@ export class PredatorPageResolver {
         qbYears = Utils.addArgConditions(qbYears, predatorName, season, region, startYear, endYear)
             .andWhere("observation_year_end IS NOT NULL")
             .groupBy("observation_year_end")
-            .orderBy("observation_year_end");
+            .orderBy("observation_year_end", "ASC");
         const rawResult = await qbYears.getRawMany();
 
         const minMaxDecades = await getManager()
