@@ -1,5 +1,6 @@
 import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
+import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager } from "typeorm";
 import { Utils, StudiesAndRecordsCount, FilterValues } from "../utils"
@@ -315,23 +316,34 @@ export class PredatorPageResolver {
     // Assumes that regions from avian_diet has the same capitilization as regions in region table
     @Query(() => FilterValues)
     async getFilterValuesPred(@Arg("name") name: string) {
-        const regionQuery = `
-        SELECT DISTINCT location_region AS region FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"
-        `;
-        const acceptableRegionsQuery = `
-        SELECT region_name AS region FROM regions
-        `;
-        const startYearQuery = `
-        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE (common_name = "${name}" OR scientific_name = "${name}") AND observation_year_end IS NOT NULL ORDER BY startYear ASC
-        `;
-        const endYearQuery = `
-        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE (common_name = "${name}" OR scientific_name = "${name}") AND observation_year_end IS NOT NULL ORDER BY endYear DESC
-        `;
+        const qbMain = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT location_region AS region")
+            .from(AvianDiet, "avian")
+            .where("common_name = :predName OR scientific_name = :predName", { predName: name });
+        const qbAcceptableRegions = getManager()
+            .createQueryBuilder()
+            .select("region_name AS region")
+            .from(Regions, "regions");
+        const qbStartYear = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear")
+            .from(AvianDiet, "avian")
+            .where("(common_name = :predName OR scientific_name = :predName)", { predName: name })
+            .andWhere("observation_year_end IS NOT NULL")
+            .orderBy("startYear", "ASC");
+        const qbEndYear = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT observation_year_end AS endYear")
+            .from(AvianDiet, "avian")
+            .where("(common_name = :predName OR scientific_name = :predName)", { predName: name })
+            .andWhere("observation_year_end IS NOT NULL")
+            .orderBy("endYear", "DESC");
 
-        const regionRawResult = await getManager().query(regionQuery);
-        const acceptableRegionsRawResult = await getManager().query(acceptableRegionsQuery);
-        const startYearRawResult = await getManager().query(startYearQuery);
-        const endYearRawResult = await getManager().query(endYearQuery);
+        const regionRawResult = await qbMain.getRawMany();
+        const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany();
+        const startYearRawResult = await qbStartYear.getRawMany();
+        const endYearRawResult = await qbEndYear.getRawMany(); 
         let acceptableRegions = new Set();
         let startYearsList = [];
         let endYearsList = [];
