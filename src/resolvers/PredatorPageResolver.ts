@@ -193,15 +193,14 @@ export class PredatorPageResolver {
 
     @Query(() => [graphXY])
     async getRecordsPerSeason(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
-        const argConditions = `
-        (common_name = "${predatorName}" OR scientific_name = "${predatorName}")
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        let qb = getManager()
+            .createQueryBuilder()
+            .select("IFNULL(observation_season, \"unspecified\") AS season, COUNT(*) as count")
+            .from(AvianDiet, "avian");
+        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear);
 
-        const rawResult = await getManager().query(`SELECT IFNULL(observation_season, "unspecified") AS season, COUNT(*) as count FROM avian_diet WHERE ${argConditions} GROUP BY observation_season`);
+        const rawResult = await qb.groupBy("observation_season").getRawMany();
+
         let summer: graphXY =  { x: "Summer", y: 0 };
         let spring: graphXY =  { x: "Spring", y: 0 };
         let fall: graphXY =  { x: "Fall", y: 0 };
