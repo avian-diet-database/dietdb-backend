@@ -156,18 +156,19 @@ export class PredatorPageResolver {
     }
 
     // Searches through common_name and scientific_name
+    // Can't use QueryBuilder because there is no union function
     @Query(() => [String])
     async getAutocompletePred(@Arg("input") input: string) {
         const query = `
         SELECT DISTINCT name FROM
-	        (SELECT DISTINCT common_name AS name FROM avian_diet WHERE common_name LIKE "%${input}%"
+	        (SELECT DISTINCT common_name AS name FROM avian_diet WHERE common_name LIKE ?
 	        UNION
-	        SELECT DISTINCT scientific_name AS name FROM avian_diet WHERE scientific_name LIKE "%${input}%") result
-        ORDER BY LENGTH(name) - LENGTH("${input}") ASC
+	        SELECT DISTINCT scientific_name AS name FROM avian_diet WHERE scientific_name LIKE ?) result
+        ORDER BY LENGTH(name) - LENGTH(?) ASC
         LIMIT 10
         `;
 
-        const rawResult = await getManager().query(query);
+        const rawResult = await getManager().query(query, ["%" + input + "%", "%" + input + "%", input]);
         let resultList = [];
         for (let item of rawResult) {
             resultList.push(item["name"]);
