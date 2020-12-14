@@ -197,9 +197,10 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("IFNULL(observation_season, \"unspecified\") AS season, COUNT(*) as count")
             .from(AvianDiet, "avian");
-        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear);
+        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
+            .groupBy("observation_season");
 
-        const rawResult = await qb.groupBy("observation_season").getRawMany();
+        const rawResult = await qb.getRawMany();
 
         let summer: graphXY =  { x: "Summer", y: 0 };
         let spring: graphXY =  { x: "Spring", y: 0 };
