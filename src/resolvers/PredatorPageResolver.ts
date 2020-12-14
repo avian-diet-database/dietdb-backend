@@ -178,11 +178,16 @@ export class PredatorPageResolver {
 
     @Query(() => StudiesAndRecordsCount)
     async getNumRecordsAndStudiesPred(@Arg("name") name: string) {
-        const numStudies = await getManager().query(`SELECT COUNT(DISTINCT source) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
-        const numRecords = await getManager().query(`SELECT COUNT(*) AS count FROM avian_diet WHERE common_name = "${name}" OR scientific_name = "${name}"`);
+        const numRecordsAndStudies = await getManager()
+            .createQueryBuilder()
+            .select("COUNT(DISTINCT source) as studiesCount, COUNT(*) as recordsCount")
+            .from(AvianDiet, "avian")
+            .where("common_name = :predName OR scientific_name = :predName", { predName: name })
+            .getRawMany();
+
         return {
-            studies: numStudies[0]["count"],
-            records: numRecords[0]["count"]
+            studies: numRecordsAndStudies[0]["studiesCount"],
+            records: numRecordsAndStudies[0]["recordsCount"]
         };
     }
 
