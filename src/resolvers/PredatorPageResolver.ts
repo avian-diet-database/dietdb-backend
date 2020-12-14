@@ -80,10 +80,10 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage, analysis_number,
                 ${Utils.getUnidTaxon("prey_" + preyLevel)} AS taxonUnid,
-			    IF(diet_type = "Items", fraction_diet, NULL) as Items,
-			    IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) as Wt_or_Vol,
-			    IF(diet_type = "Occurrence", fraction_diet, NULL) as Occurrence,
-                IF(diet_type = "Unspecified", fraction_diet, NULL) as Unspecified
+			    IF(diet_type = "Items", fraction_diet, NULL) AS Items,
+			    IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) AS Wt_or_Vol,
+			    IF(diet_type = "Occurrence", fraction_diet, NULL) AS Occurrence,
+                IF(diet_type = "Unspecified", fraction_diet, NULL) AS Unspecified
             `)
             .from(AvianDiet, "avian");
         qbInitialSplit = Utils.addArgConditions(qbInitialSplit, predatorName, season, region, startYear, endYear);
@@ -94,10 +94,10 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select(`diet_type,
                 ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
-                SUM(Items) as Items,
-                SUM(Wt_or_Vol) as Wt_or_Vol,
-                MAX(Occurrence) as Occurrence,
-                SUM(Unspecified) as Unspecified
+                SUM(Items) AS Items,
+                SUM(Wt_or_Vol) AS Wt_or_Vol,
+                MAX(Occurrence) AS Occurrence,
+                SUM(Unspecified) AS Unspecified
             `)
             .from("(" + qbInitialSplit.getQuery() + ")", "initialSplit")
             .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number");
@@ -105,7 +105,7 @@ export class PredatorPageResolver {
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
         const totalPerDietType = getManager()
             .createQueryBuilder()
-            .select("diet_type, COUNT(*) as n")
+            .select("diet_type, COUNT(*) AS n")
             .from(subQuery => {
                 return Utils.addArgConditions(subQuery
                 .select("DISTINCT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, analysis_number")
@@ -116,7 +116,7 @@ export class PredatorPageResolver {
         // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
         const qbInitialPercentage = getManager()
             .createQueryBuilder()
-            .select("taxon, initialSum.diet_type, SUM(Items) * 100.0 / n as Items, SUM(Wt_or_Vol) * 100.0 / n as Wt_or_Vol, SUM(Occurrence) * 100.0 / n as Occurrence, SUM(Unspecified) * 100.0 / n as Unspecified")
+            .select("taxon, initialSum.diet_type, SUM(Items) * 100.0 / n AS Items, SUM(Wt_or_Vol) * 100.0 / n AS Wt_or_Vol, SUM(Occurrence) * 100.0 / n AS Occurrence, SUM(Unspecified) * 100.0 / n AS Unspecified")
             .from("(" + qbInitialSum.getQuery() + ")", "initialSum")
             .from("(" + totalPerDietType.getQuery() + ")", "totalPerDietType")
             .where("totalPerDietType.diet_type = initialSum.diet_type")
@@ -127,7 +127,7 @@ export class PredatorPageResolver {
         // There are multiple records for a single prey since each record corresponds to one of the four diet types. This will group those records together so we end up having one record with four filled out columns for each diet type
         const finalCombine = await getManager()
             .createQueryBuilder()
-            .select("taxon, SUM(Items) as items, SUM(Wt_or_Vol) as wt_or_vol, SUM(Occurrence) as occurrence, SUM(Unspecified) as unspecified")
+            .select("taxon, SUM(Items) AS items, SUM(Wt_or_Vol) AS wt_or_vol, SUM(Occurrence) AS occurrence, SUM(Unspecified) AS unspecified")
             .from("(" + qbInitialPercentage.getQuery() + ")", "initialPercentage")
             .groupBy("taxon")
             .setParameters(qbInitialPercentage.getParameters())
@@ -181,7 +181,7 @@ export class PredatorPageResolver {
     async getNumRecordsAndStudiesPred(@Arg("name") name: string) {
         const numRecordsAndStudies = await getManager()
             .createQueryBuilder()
-            .select("COUNT(DISTINCT source) as studiesCount, COUNT(*) as recordsCount")
+            .select("COUNT(DISTINCT source) AS studiesCount, COUNT(*) AS recordsCount")
             .from(AvianDiet, "avian")
             .where("common_name = :predName OR scientific_name = :predName", { predName: name })
             .getRawMany();
@@ -196,7 +196,7 @@ export class PredatorPageResolver {
     async getRecordsPerSeason(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
         let qb = getManager()
             .createQueryBuilder()
-            .select("IFNULL(observation_season, \"unspecified\") AS season, COUNT(*) as count")
+            .select("IFNULL(observation_season, \"unspecified\") AS season, COUNT(*) AS count")
             .from(AvianDiet, "avian");
         qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
             .groupBy("observation_season");
@@ -234,7 +234,7 @@ export class PredatorPageResolver {
     async getRecordsPerDecade(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {            
         let qbYears = getManager()
             .createQueryBuilder()
-            .select("observation_year_end as year, COUNT(*) as count")
+            .select("observation_year_end AS year, COUNT(*) AS count")
             .from(AvianDiet, "avian");
         qbYears = Utils.addArgConditions(qbYears, predatorName, season, region, startYear, endYear)
             .andWhere("observation_year_end IS NOT NULL")
@@ -244,7 +244,7 @@ export class PredatorPageResolver {
 
         const minMaxDecades = await getManager()
             .createQueryBuilder()
-            .select("MIN(observation_year_end) as min, MAX(observation_year_end) as max")
+            .select("MIN(observation_year_end) AS min, MAX(observation_year_end) AS max")
             .from(AvianDiet, "avian")
             .where("(common_name = :name OR scientific_name = :name)", { name: predatorName })
             .andWhere("observation_year_end IS NOT NULL")
@@ -277,7 +277,7 @@ export class PredatorPageResolver {
     async getRecordsPerDietType(@Args() {predatorName, startYear, endYear, season, region}: GetPreyOfArgs) {
         let qb = getManager()
             .createQueryBuilder()
-            .select("diet_type as diet, COUNT(*) as count")
+            .select("diet_type AS diet, COUNT(*) AS count")
             .from(AvianDiet, "avian");
         qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
             .groupBy("diet_type");
