@@ -180,18 +180,22 @@ export class PreyPageResolver {
     async getNumRecordsAndStudiesPrey(
         @Arg("name") name: string
     ) {
-        const studiesQuery = `
-        SELECT COUNT(*) as numRecords, COUNT(DISTINCT source) AS numStudies FROM avian_diet WHERE
-            prey_kingdom = "${name}" OR
-            prey_phylum = "${name}" OR
-            prey_class = "${name}" OR
-            prey_order = "${name}" OR
-            prey_suborder = "${name}" OR
-            prey_family = "${name}" OR
-            prey_genus = "${name}" OR
-            prey_scientific_name = "${name}"
-        `;
-        const rawResult = await getManager().query(studiesQuery);
+        const qb = getManager()
+            .createQueryBuilder()
+            .select("COUNT(*) as numRecords, COUNT(DISTINCT source) AS numStudies")
+            .from(AvianDiet, "avian")
+            .where(`
+                prey_kingdom = :preyName OR
+                prey_phylum = :preyName OR
+                prey_class = :preyName OR
+                prey_order = :preyName OR
+                prey_suborder = :preyName OR
+                prey_family = :preyName OR
+                prey_genus = :preyName OR
+                prey_scientific_name = :preyName
+            `, { preyName: name });
+
+        const rawResult = await qb.getRawMany();
         return {
             studies: rawResult[0]["numStudies"],
             records: rawResult[0]["numRecords"]
