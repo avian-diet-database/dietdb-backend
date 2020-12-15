@@ -205,24 +205,13 @@ export class PreyPageResolver {
     // Assumes sources will never be empty/null in database
     @Query(() => [String])
     async getPredatorOfSources(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {            
-        const argConditions = `
-        (prey_kingdom = "${preyName}" OR prey_phylum = "${preyName}" OR prey_class = "${preyName}" OR prey_order = "${preyName}" OR prey_suborder = "${preyName}" OR prey_family = "${preyName}" OR prey_genus = "${preyName}" OR prey_scientific_name = "${preyName}")
-        ${preyStage !== "any" ? (preyStage === "adult" ? " AND (prey_stage = \"" + preyStage + "\" OR prey_stage IS NULL)" : " AND prey_stage = \"" + preyStage + "\"") : ""}
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
+        let qb = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT source")
+            .from(AvianDiet, "avian");
+        qb = PreyPageResolver.addArgConditions(qb, preyName, preyStage, season, region, startYear, endYear);
 
-        const query = `
-        SELECT
-            DISTINCT source 
-        FROM 
-            avian_diet
-        WHERE ${argConditions}
-        `;
-
-        const rawResult = await getManager().query(query);
+        const rawResult = await qb.getRawMany();
         let sourceList = [];
         for (let source of rawResult) {
             sourceList.push(source["source"]);
