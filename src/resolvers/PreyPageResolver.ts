@@ -1,5 +1,6 @@
 import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
+import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager, SelectQueryBuilder } from "typeorm";
 import { FilterValues, StudiesAndRecordsCount } from "../utils";
@@ -72,6 +73,7 @@ export class PreyPageResolver {
     }
 
     // Searches through all prey levels
+    // Can't use QueryBuilder because there is no union function
     @Query(() => [String])
     async getAutocompletePrey(
         @Arg("input") input: string
@@ -113,32 +115,43 @@ export class PreyPageResolver {
         @Arg("name") name: string
     ) {
         const preyFilter = `
-            prey_kingdom = "${name}" OR
-            prey_phylum = "${name}" OR
-            prey_class = "${name}" OR
-            prey_order = "${name}" OR
-            prey_suborder = "${name}" OR
-            prey_family = "${name}" OR
-            prey_genus = "${name}" OR
-            prey_scientific_name = "${name}"
+            (prey_kingdom = :preyName OR
+            prey_phylum = :preyName OR
+            prey_class = :preyName OR
+            prey_order = :preyName OR
+            prey_suborder = :preyName OR
+            prey_family = :preyName OR
+            prey_genus = :preyName OR
+            prey_scientific_name = :preyName)
         `;
-        const regionQuery = `
-        SELECT DISTINCT location_region as region FROM avian_diet WHERE ${preyFilter}
-        `;
-        const acceptableRegionsQuery = `
-        SELECT region_name AS region FROM regions
-        `;
-        const startYearQuery = `
-        SELECT DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear FROM avian_diet WHERE (${preyFilter}) AND observation_year_end IS NOT NULL ORDER BY startYear ASC
-        `;
-        const endYearQuery = `
-        SELECT DISTINCT observation_year_end AS endYear FROM avian_diet WHERE (${preyFilter}) AND observation_year_end IS NOT NULL ORDER BY endYear DESC
-        `;
+        const qbRegion = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT location_region AS region")
+            .from(AvianDiet, "avian")
+            .where(preyFilter, { preyName: name });
+        const qbAcceptableRegions = getManager()
+            .createQueryBuilder()
+            .select("region_name AS region")
+            .from(Regions, "regions");
+        const qbStartYear = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear")
+            .from(AvianDiet, "avian")
+            .where(preyFilter, { preyName: name })
+            .andWhere("observation_year_end IS NOT NULL")
+            .orderBy("startYear", "ASC");
+        const qbEndYear = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT observation_year_end AS endYear")
+            .from(AvianDiet, "avian")
+            .where(preyFilter, { preyName: name })
+            .andWhere("observation_year_end IS NOT NULL")
+            .orderBy("endYear", "DESC");
 
-        const regionRawResult = await getManager().query(regionQuery);
-        const acceptableRegionsRawResult = await getManager().query(acceptableRegionsQuery);
-        const startYearRawResult = await getManager().query(startYearQuery);
-        const endYearRawResult = await getManager().query(endYearQuery);
+        const regionRawResult = await qbRegion.getRawMany();
+        const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany(); 
+        const startYearRawResult = await qbStartYear.getRawMany();
+        const endYearRawResult = await qbEndYear.getRawMany(); 
         let acceptableRegions = new Set();
         let startYearsList = [];
         let endYearsList = [];
