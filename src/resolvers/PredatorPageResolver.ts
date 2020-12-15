@@ -2,7 +2,7 @@ import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
 import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
-import { getManager } from "typeorm";
+import { getManager, SelectQueryBuilder } from "typeorm";
 import { Utils, StudiesAndRecordsCount, FilterValues } from "../utils"
 
 @ArgsType()
@@ -86,7 +86,7 @@ export class PredatorPageResolver {
                 IF(diet_type = "Unspecified", fraction_diet, NULL) AS Unspecified
             `)
             .from(AvianDiet, "avian");
-        qbInitialSplit = Utils.addArgConditions(qbInitialSplit, predatorName, season, region, startYear, endYear);
+        qbInitialSplit = PredatorPageResolver.addArgConditions(qbInitialSplit, predatorName, season, region, startYear, endYear);
 
         // For each of those specific prey of a specific study, group them and sum together the diet, separating by type
         // If preyLevel is lower than prey class, we append the prey_stage to the prey name
@@ -107,7 +107,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("diet_type, COUNT(*) AS n")
             .from(subQuery => {
-                return Utils.addArgConditions(subQuery
+                return PredatorPageResolver.addArgConditions(subQuery
                 .select("DISTINCT source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, analysis_number")
                 .from(AvianDiet, "avian"), predatorName, season, region, startYear, endYear);
             }, "distinctCombo")
@@ -144,7 +144,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("DISTINCT source")
             .from(AvianDiet, "avian");
-        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear);
+        qb = PredatorPageResolver.addArgConditions(qb, predatorName, season, region, startYear, endYear);
 
         const rawResult = await qb.getRawMany();
 
@@ -198,7 +198,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("IFNULL(observation_season, \"unspecified\") AS season, COUNT(*) AS count")
             .from(AvianDiet, "avian");
-        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
+        qb = PredatorPageResolver.addArgConditions(qb, predatorName, season, region, startYear, endYear)
             .groupBy("observation_season");
 
         const rawResult = await qb.getRawMany();
@@ -236,7 +236,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("observation_year_end AS year, COUNT(*) AS count")
             .from(AvianDiet, "avian");
-        qbYears = Utils.addArgConditions(qbYears, predatorName, season, region, startYear, endYear)
+        qbYears = PredatorPageResolver.addArgConditions(qbYears, predatorName, season, region, startYear, endYear)
             .andWhere("observation_year_end IS NOT NULL")
             .groupBy("observation_year_end")
             .orderBy("observation_year_end", "ASC");
@@ -279,7 +279,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("diet_type AS diet, COUNT(*) AS count")
             .from(AvianDiet, "avian");
-        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
+        qb = PredatorPageResolver.addArgConditions(qb, predatorName, season, region, startYear, endYear)
             .groupBy("diet_type");
         const rawResult = await qb.getRawMany();
 
@@ -375,7 +375,7 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("location_region AS region, COUNT(location_region) AS count")
             .from(AvianDiet, "avian");
-        qb = Utils.addArgConditions(qb, predatorName, season, region, startYear, endYear)
+        qb = PredatorPageResolver.addArgConditions(qb, predatorName, season, region, startYear, endYear)
             .groupBy("location_region");
 
         const rawResult = await qb.getRawMany();
@@ -392,5 +392,23 @@ export class PredatorPageResolver {
             }
         }
         return regionCount.values();
+    }
+
+    static addArgConditions(qb: SelectQueryBuilder<any>, predatorName: string, season: string, region: string, startYear?: string, endYear?: string) {
+        qb = qb.where("(avian.common_name = :name OR avian.scientific_name = :name)", { name: predatorName });
+
+        if (startYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_begin >= :startYear", { startYear: startYear });
+        }
+        if (endYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_end <= :endYear", { endYear: endYear });
+        }
+        if (season !== "all") {
+            qb = qb.andWhere("avian.observation_season LIKE :season", { season: "%" + season + "%" });
+        }
+        if (region !== "all") {
+            qb = qb.andWhere("avian.location_region LIKE :region", { region: "%" + region + "%" });
+        }
+        return qb;
     }
 }
