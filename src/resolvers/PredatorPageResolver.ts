@@ -394,6 +394,7 @@ export class PredatorPageResolver {
         return regionCount.values();
     }
 
+    // Assumes AvianDiet alias is avian
     static addArgConditions(qb: SelectQueryBuilder<any>, predatorName: string, season: string, region: string, startYear?: string, endYear?: string) {
         qb = qb.where("(avian.common_name = :name OR avian.scientific_name = :name)", { name: predatorName });
 

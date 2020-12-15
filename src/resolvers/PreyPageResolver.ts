@@ -1,6 +1,7 @@
 import { IsIn } from "class-validator";
+import { AvianDiet } from "../entities/AvianDiet";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
-import { getManager } from "typeorm";
+import { getManager, SelectQueryBuilder } from "typeorm";
 import { FilterValues, StudiesAndRecordsCount } from "../utils";
 
 // For prey page, we list predators
@@ -13,6 +14,7 @@ class GetPredatorOfArgs {
     @IsIn(["any", "larva", "pupa", "adult"])
     preyStage: string;
 
+    // TODO: Remove this field, no longer used
     @Field({ defaultValue: "all"})
     @IsIn(["wt_or_vol", "items", "occurrence", "unspecified", "all"])
     dietType: string;
@@ -52,33 +54,21 @@ export class Predator {
 @Resolver()
 export class PreyPageResolver {
     @Query(() => [Predator])
-    async getPredatorOf(@Args() {preyName, preyStage, dietType, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        const argConditions = `
-        (prey_kingdom = "${preyName}" OR prey_phylum = "${preyName}" OR prey_class = "${preyName}" OR prey_order = "${preyName}" OR prey_suborder = "${preyName}" OR prey_family = "${preyName}" OR prey_genus = "${preyName}" OR prey_scientific_name = "${preyName}")
-        ${preyStage !== "any" ? (preyStage === "adult" ? " AND (prey_stage = \"" + preyStage + "\" OR prey_stage IS NULL)" : " AND prey_stage = \"" + preyStage + "\"") : ""}
-        ${startYear !== undefined ? " AND observation_year_begin >= " + startYear : ""}
-        ${endYear !== undefined ? " AND observation_year_end <= " + endYear : ""}
-        ${season !== "all" ? " AND observation_season LIKE \"%" + season + "%\"" : ""}
-        ${region !== "all" ? " AND location_region LIKE \"%" + region + "%\"" : ""}
-        `;
-
-        const query = `
-        SELECT
-                common_name, family, diet_type, AVG(fraction_diet) * 100.0 AS fraction_diet, COUNT(DISTINCT source) AS number_of_studies
-        FROM
-            (SELECT
-                common_name, family, diet_type, source,
-                IF(diet_type = "Occurrence", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet
-            FROM
-                avian_diet
-            WHERE ${argConditions}
-            GROUP BY source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites
-        ) final1
-        GROUP BY common_name, family, diet_type
-        ${dietType !== "all" ? "HAVING diet_type = \"" + dietType + "\"" : ""}
-        `;
-
-        return await getManager().query(query);
+    async getPredatorOf(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {
+        let qbInitial = getManager()
+            .createQueryBuilder()
+            .select("common_name, family, diet_type, source, IF(diet_type = \"Occurrence\", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet")
+            .from(AvianDiet, "avian");
+        qbInitial = PreyPageResolver.addArgConditions(qbInitial, preyName, preyStage, season, region, startYear, endYear)
+            .groupBy("source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites");
+        
+        const qbFinal = getManager()
+            .createQueryBuilder()
+            .select("common_name, family, diet_type, AVG(fraction_diet) * 100.0 AS fraction_diet, COUNT(DISTINCT source) AS number_of_studies")
+            .from("(" + qbInitial.getQuery() + ")", "initial")
+            .groupBy("common_name, family, diet_type")
+            .setParameters(qbInitial.getParameters());
+        return await qbFinal.getRawMany();
     }
 
     // Searches through all prey levels
@@ -221,5 +211,31 @@ export class PreyPageResolver {
             sourceList.push(source["source"]);
         }
         return sourceList;
+    }
+
+    // Assumes AvianDiet alias is avian
+    static addArgConditions(qb: SelectQueryBuilder<any>, preyName: string, preyStage: string, season: string, region: string, startYear?: string, endYear?: string) {
+        qb = qb.where("(prey_kingdom = :name OR prey_phylum = :name OR prey_class = :name OR prey_order = :name OR prey_suborder = :name OR prey_family = :name OR prey_genus = :name OR prey_scientific_name = :name)", { name: preyName });
+
+        if (preyStage !== "any") {
+            if (preyStage === "adult") {
+                qb = qb.andWhere("(avian.prey_stage = :stage OR avian.prey_stage IS NULL)", { stage: preyStage })
+            } else {
+                qb = qb.andWhere("avian.prey_stage = :stage", { stage: preyStage })
+            }
+        }
+        if (startYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_begin >= :startYear", { startYear: startYear });
+        }
+        if (endYear !== undefined) {
+            qb = qb.andWhere("avian.observation_year_end <= :endYear", { endYear: endYear });
+        }
+        if (season !== "all") {
+            qb = qb.andWhere("avian.observation_season LIKE :season", { season: "%" + season + "%" });
+        }
+        if (region !== "all") {
+            qb = qb.andWhere("avian.location_region LIKE :region", { region: "%" + region + "%" });
+        }
+        return qb;
     }
 }
