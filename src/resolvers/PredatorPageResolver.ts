@@ -91,12 +91,10 @@ export class PredatorPageResolver {
 
         // For each of those specific prey of a specific study, group them and sum together the diet, separating by type
         // If preyLevel is lower than prey class, we append the prey_stage to the prey name
-        // We additionally group by prey_kingdom, prey_stage for matching with common_name later on. This aggregation is required for sql_mode=full_group_by
-        // Grouping by prey_stage is essentially being done when we group taxon
+        // We select MAX of prey_kingdom, taxonUnid, and prey_stage in order to work around sql_mode=only_full_group_by, which would otherwise force us to include them in the group by
         const qbInitialSum = getManager()
             .createQueryBuilder()
-            .select(`diet_type, prey_kingdom, taxonUnid,
-                prey_stage AS original_stage,
+            .select(`diet_type, MAX(prey_kingdom) AS prey_kingdom, MAX(taxonUnid) AS taxonUnid, MAX(prey_stage) AS prey_stage,
                 ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
                 SUM(Items) AS Items,
                 SUM(Wt_or_Vol) AS Wt_or_Vol,
@@ -104,7 +102,7 @@ export class PredatorPageResolver {
                 SUM(Unspecified) AS Unspecified
             `)
             .from("(" + qbInitialSplit.getQuery() + ")", "initialSplit")
-            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number, prey_kingdom, prey_stage");
+            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number");
 
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
         const totalPerDietType = getManager()
@@ -120,7 +118,7 @@ export class PredatorPageResolver {
         // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
         const qbInitialPercentage = getManager()
             .createQueryBuilder()
-            .select("taxon, prey_kingdom, taxonUnid, original_stage, initialSum.diet_type, SUM(Items) * 100.0 / n AS Items, SUM(Wt_or_Vol) * 100.0 / n AS Wt_or_Vol, SUM(Occurrence) * 100.0 / n AS Occurrence, SUM(Unspecified) * 100.0 / n AS Unspecified")
+            .select("taxon, MAX(prey_kingdom) AS prey_kingdom, MAX(taxonUnid) AS taxonUnid, MAX(prey_stage) AS prey_stage, initialSum.diet_type, SUM(Items) * 100.0 / n AS Items, SUM(Wt_or_Vol) * 100.0 / n AS Wt_or_Vol, SUM(Occurrence) * 100.0 / n AS Occurrence, SUM(Unspecified) * 100.0 / n AS Unspecified")
             .from("(" + qbInitialSum.getQuery() + ")", "initialSum")
             .from("(" + totalPerDietType.getQuery() + ")", "totalPerDietType")
             .where("totalPerDietType.diet_type = initialSum.diet_type")
@@ -131,7 +129,7 @@ export class PredatorPageResolver {
         // There are multiple records for a single prey since each record corresponds to one of the four diet types. This will group those records together so we end up having one record with four filled out columns for each diet type
         const finalCombine = await getManager()
             .createQueryBuilder()
-            .select("taxon, prey_kingdom, taxonUnid, original_stage, SUM(Items) AS items, SUM(Wt_or_Vol) AS wt_or_vol, SUM(Occurrence) AS occurrence, SUM(Unspecified) AS unspecified")
+            .select("taxon, MAX(prey_kingdom) AS prey_kingdom, MAX(taxonUnid) AS taxonUnid, MAX(prey_stage) AS prey_stage, SUM(Items) AS items, SUM(Wt_or_Vol) AS wt_or_vol, SUM(Occurrence) AS occurrence, SUM(Unspecified) AS unspecified")
             .from("(" + qbInitialPercentage.getQuery() + ")", "initialPercentage")
             .groupBy("taxon")
             .setParameters(qbInitialPercentage.getParameters())
@@ -148,7 +146,7 @@ export class PredatorPageResolver {
                 // First we check if the records prey_stage has an exact match
                 let result = await qbMatchCommonName
                     .where("taxon = :name AND taxonomic_rank = :rank AND prey_kingdom = :kingdom AND prey_stage = :stage",
-                    { name: record['taxonUnid'], rank: preyLevel, kingdom: record['prey_kingdom'], stage: record['original_stage'] }).getRawOne();
+                    { name: record['taxonUnid'], rank: preyLevel, kingdom: record['prey_kingdom'], stage: record['prey_stage'] }).getRawOne();
                 // Otherwise we check for a match when prey_stage doesn't matter
                 if (result === undefined) {
                     result = await qbMatchCommonName
