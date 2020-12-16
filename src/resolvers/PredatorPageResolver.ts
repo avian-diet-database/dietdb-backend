@@ -91,7 +91,8 @@ export class PredatorPageResolver {
 
         // For each of those specific prey of a specific study, group them and sum together the diet, separating by type
         // If preyLevel is lower than prey class, we append the prey_stage to the prey name
-        // We additionally group by prey_kingdom for matching with common_name later on. This aggregation is required for sql_mode=full_group_by
+        // We additionally group by prey_kingdom, prey_stage for matching with common_name later on. This aggregation is required for sql_mode=full_group_by
+        // Grouping by prey_stage is essentially being done when we group taxon
         const qbInitialSum = getManager()
             .createQueryBuilder()
             .select(`diet_type, prey_kingdom, taxonUnid,
@@ -103,7 +104,7 @@ export class PredatorPageResolver {
                 SUM(Unspecified) AS Unspecified
             `)
             .from("(" + qbInitialSplit.getQuery() + ")", "initialSplit")
-            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number, prey_kingdom");
+            .groupBy("source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, taxon, diet_type, analysis_number, prey_kingdom, prey_stage");
 
         // Group together the columns that identify unique prey studies and count number of records that each has per diet type
         const totalPerDietType = getManager()
