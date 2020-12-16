@@ -1,5 +1,6 @@
 import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
+import { CommonNames } from "../entities/CommonNames";
 import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager, SelectQueryBuilder } from "typeorm";
@@ -78,7 +79,7 @@ export class PredatorPageResolver {
         // Selecting columns that identifies a specific prey of a specific study and creating new columns for each of the four diet types
         let qbInitialSplit = getManager()
             .createQueryBuilder()
-            .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage, analysis_number,
+            .select(`source, observation_year_begin, observation_month_begin, observation_season, bird_sample_size, habitat_type, location_region, item_sample_size, diet_type, prey_stage, analysis_number, prey_kingdom,
                 ${Utils.getUnidTaxon("prey_" + preyLevel)} AS taxonUnid,
 			    IF(diet_type = "Items", fraction_diet, NULL) AS Items,
 			    IF(diet_type = "Wt_or_Vol", fraction_diet, NULL) AS Wt_or_Vol,
@@ -92,7 +93,8 @@ export class PredatorPageResolver {
         // If preyLevel is lower than prey class, we append the prey_stage to the prey name
         const qbInitialSum = getManager()
             .createQueryBuilder()
-            .select(`diet_type,
+            .select(`diet_type, prey_kingdom, taxonUnid,
+                prey_stage AS original_stage,
                 ${preyLevel !== "kingdom" && preyLevel !== "phylum" && preyLevel !== "class" ? "IF(prey_stage IS NOT NULL AND prey_stage != \"adult\", CONCAT(taxonUnid, ' ', prey_stage), taxonUnid)" : "taxonUnid"} AS taxon,
                 SUM(Items) AS Items,
                 SUM(Wt_or_Vol) AS Wt_or_Vol,
@@ -116,7 +118,7 @@ export class PredatorPageResolver {
         // Divide initial obtained from query qbInitialSum by number of records per diet type we obtained in totalPerDietType and multiply by 100 to get a percentage
         const qbInitialPercentage = getManager()
             .createQueryBuilder()
-            .select("taxon, initialSum.diet_type, SUM(Items) * 100.0 / n AS Items, SUM(Wt_or_Vol) * 100.0 / n AS Wt_or_Vol, SUM(Occurrence) * 100.0 / n AS Occurrence, SUM(Unspecified) * 100.0 / n AS Unspecified")
+            .select("taxon, prey_kingdom, taxonUnid, original_stage, initialSum.diet_type, SUM(Items) * 100.0 / n AS Items, SUM(Wt_or_Vol) * 100.0 / n AS Wt_or_Vol, SUM(Occurrence) * 100.0 / n AS Occurrence, SUM(Unspecified) * 100.0 / n AS Unspecified")
             .from("(" + qbInitialSum.getQuery() + ")", "initialSum")
             .from("(" + totalPerDietType.getQuery() + ")", "totalPerDietType")
             .where("totalPerDietType.diet_type = initialSum.diet_type")
@@ -127,12 +129,36 @@ export class PredatorPageResolver {
         // There are multiple records for a single prey since each record corresponds to one of the four diet types. This will group those records together so we end up having one record with four filled out columns for each diet type
         const finalCombine = await getManager()
             .createQueryBuilder()
-            .select("taxon, SUM(Items) AS items, SUM(Wt_or_Vol) AS wt_or_vol, SUM(Occurrence) AS occurrence, SUM(Unspecified) AS unspecified")
+            .select("taxon, prey_kingdom, taxonUnid, original_stage, SUM(Items) AS items, SUM(Wt_or_Vol) AS wt_or_vol, SUM(Occurrence) AS occurrence, SUM(Unspecified) AS unspecified")
             .from("(" + qbInitialPercentage.getQuery() + ")", "initialPercentage")
             .groupBy("taxon")
             .setParameters(qbInitialPercentage.getParameters())
             .getRawMany();
-        
+
+        // Appending common name if exists
+        const qbMatchCommonName = getManager()
+            .createQueryBuilder()
+            .select("common_name")
+            .from(CommonNames, "names");
+        for (let record of finalCombine) {
+            // Skip any unidentified prey
+            if (record["taxonUnid"].substring(0, Utils.unidentifiedPrefix.length) !== Utils.unidentifiedPrefix) {
+                // First we check if the records prey_stage has an exact match
+                let result = await qbMatchCommonName
+                    .where("taxon = :name AND taxonomic_rank = :rank AND prey_kingdom = :kingdom AND prey_stage = :stage",
+                    { name: record['taxonUnid'], rank: preyLevel, kingdom: record['prey_kingdom'], stage: record['original_stage'] }).getRawOne();
+                // Otherwise we check for a match when prey_stage doesn't matter
+                if (result === undefined) {
+                    result = await qbMatchCommonName
+                        .where("taxon = :name AND taxonomic_rank = :rank AND prey_kingdom = :kingdom AND prey_stage = :stage",
+                        { name: record['taxonUnid'], rank: preyLevel, kingdom: record['prey_kingdom'], stage: "NA" }).getRawOne();
+                }
+                // Append if common_name exists
+                if (result !== undefined) {
+                    record["taxon"] = record["taxon"] + " [" + result["common_name"] + "]" ;
+                }
+            }
+        }
         return finalCombine;
     }
 
