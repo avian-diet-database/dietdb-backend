@@ -381,7 +381,7 @@ export class PredatorPageResolver {
             endYearsList.push(item["endYear"]);
         }
         // Years are solely based on observation_end_year
-        return { regions: regionList, startYears: endYearsList, endYears: endYearsList };
+        return { regions: regionList, startYears: endYearsList.reverse(), endYears: endYearsList };
     }
 
     
