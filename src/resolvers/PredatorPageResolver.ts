@@ -74,6 +74,7 @@ export class Prey {
 export class PredatorPageResolver {
     // Only have to worry about securing values against SQL injection for those not checked by GetPreyOfArgs
     // That is: predatorName, startYear, endYear, region
+    // startYear is based on observation_year_end
     @Query(() => [Prey])
     async getPreyOf(@Args() {predatorName, preyLevel, startYear, endYear, season, region}: GetPreyOfArgs) {
         // Selecting columns that identifies a specific prey of a specific study and creating new columns for each of the four diet types
@@ -351,13 +352,6 @@ export class PredatorPageResolver {
             .createQueryBuilder()
             .select("region_name AS region")
             .from(Regions, "regions");
-        const qbStartYear = getManager()
-            .createQueryBuilder()
-            .select("DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear")
-            .from(AvianDiet, "avian")
-            .where("(common_name = :predName OR scientific_name = :predName)", { predName: name })
-            .andWhere("observation_year_end IS NOT NULL")
-            .orderBy("startYear", "ASC");
         const qbEndYear = getManager()
             .createQueryBuilder()
             .select("DISTINCT observation_year_end AS endYear")
@@ -368,10 +362,8 @@ export class PredatorPageResolver {
 
         const regionRawResult = await qbMain.getRawMany();
         const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany();
-        const startYearRawResult = await qbStartYear.getRawMany();
         const endYearRawResult = await qbEndYear.getRawMany(); 
         let acceptableRegions = new Set();
-        let startYearsList = [];
         let endYearsList = [];
         let regionList = new Set();
         for (let item of acceptableRegionsRawResult) {
@@ -385,13 +377,11 @@ export class PredatorPageResolver {
                 }
             }
         }
-        for (let item of startYearRawResult) {
-            startYearsList.push(item["startYear"]);
-        }
         for (let item of endYearRawResult) {
             endYearsList.push(item["endYear"]);
         }
-        return { regions: regionList, startYears: startYearsList, endYears: endYearsList };
+        // Years are solely based on observation_end_year
+        return { regions: regionList, startYears: endYearsList, endYears: endYearsList };
     }
 
     
@@ -425,7 +415,7 @@ export class PredatorPageResolver {
         qb = qb.where("(avian.common_name = :name OR avian.scientific_name = :name)", { name: predatorName });
 
         if (startYear !== undefined) {
-            qb = qb.andWhere("avian.observation_year_begin >= :startYear", { startYear: startYear });
+            qb = qb.andWhere("avian.observation_year_end >= :startYear", { startYear: startYear });
         }
         if (endYear !== undefined) {
             qb = qb.andWhere("avian.observation_year_end <= :endYear", { endYear: endYear });
