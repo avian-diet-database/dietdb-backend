@@ -57,17 +57,7 @@ export class Predator {
 export class PreyPageResolver {
     @Query(() => [Predator])
     async getPredatorOf(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        // Checks to see if the preyName given is a common name
-        const matchCommonToTaxon = await getManager()
-            .createQueryBuilder()
-            .select("taxon")
-            .from(CommonNames, "common_names")
-            .where("common_name = :name", { name: preyName })
-            .getRawOne();
-        // If a mapping exists, set to taxon to be queried properly later
-        if (matchCommonToTaxon !== undefined) {
-            preyName = matchCommonToTaxon["taxon"];
-        }
+        preyName = await PreyPageResolver.getTaxonGivenCommonName(preyName);
         let qbInitial = getManager()
             .createQueryBuilder()
             .select("common_name, family, diet_type, source, IF(diet_type = \"Occurrence\", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet")
@@ -131,6 +121,7 @@ export class PreyPageResolver {
     async getFilterValuesPrey(
         @Arg("name") name: string
     ) {
+        name = await PreyPageResolver.getTaxonGivenCommonName(name);
         const preyFilter = `
             (prey_kingdom = :preyName OR
             prey_phylum = :preyName OR
@@ -197,6 +188,7 @@ export class PreyPageResolver {
     async getNumRecordsAndStudiesPrey(
         @Arg("name") name: string
     ) {
+        name = await PreyPageResolver.getTaxonGivenCommonName(name);
         const qb = getManager()
             .createQueryBuilder()
             .select("COUNT(*) as numRecords, COUNT(DISTINCT source) AS numStudies")
@@ -222,6 +214,7 @@ export class PreyPageResolver {
     // Assumes sources will never be empty/null in database
     @Query(() => [String])
     async getPredatorOfSources(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {            
+        preyName = await PreyPageResolver.getTaxonGivenCommonName(preyName);
         let qb = getManager()
             .createQueryBuilder()
             .select("DISTINCT source")
@@ -260,5 +253,20 @@ export class PreyPageResolver {
             qb = qb.andWhere("avian.location_region LIKE :region", { region: "%" + region + "%" });
         }
         return qb;
+    }
+
+    static async getTaxonGivenCommonName(name: string) {
+        // Checks to see if the preyName given is a common name
+        const matchCommonToTaxon = await getManager()
+            .createQueryBuilder()
+            .select("taxon")
+            .from(CommonNames, "common_names")
+            .where("common_name = :input", { input: name })
+            .getRawOne();
+        // If a mapping exists, return mapped taxon
+        if (matchCommonToTaxon !== undefined) {
+            return matchCommonToTaxon["taxon"];
+        }
+        return name;
     }
 }
