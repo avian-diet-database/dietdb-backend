@@ -196,7 +196,7 @@ export class PredatorPageResolver {
         LIMIT 10
         `;
 
-        const rawResult = await getManager().query(query, ["%" + input + "%", "%" + input + "%", input]);
+        const rawResult = await getManager().query(query, [input + "%", input + "%", input]);
         let resultList = [];
         for (let item of rawResult) {
             resultList.push(item["name"]);

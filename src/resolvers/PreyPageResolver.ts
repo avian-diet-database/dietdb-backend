@@ -93,24 +93,24 @@ export class PreyPageResolver {
         // Last query in union list allows users to look up prey via common name. The query ensures the common name has a match in the database.
         const query = `
         SELECT DISTINCT name FROM
-            (SELECT DISTINCT prey_kingdom AS name FROM avian_diet WHERE prey_kingdom LIKE "%${input}%"
+            (SELECT DISTINCT prey_kingdom AS name FROM avian_diet WHERE prey_kingdom LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_phylum AS name FROM avian_diet WHERE prey_phylum LIKE "%${input}%"
+            SELECT DISTINCT prey_phylum AS name FROM avian_diet WHERE prey_phylum LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_class AS name FROM avian_diet WHERE prey_class LIKE "%${input}%"
+            SELECT DISTINCT prey_class AS name FROM avian_diet WHERE prey_class LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_order AS name FROM avian_diet WHERE prey_order LIKE "%${input}%"
+            SELECT DISTINCT prey_order AS name FROM avian_diet WHERE prey_order LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_suborder AS name FROM avian_diet WHERE prey_suborder LIKE "%${input}%"
+            SELECT DISTINCT prey_suborder AS name FROM avian_diet WHERE prey_suborder LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_family AS name FROM avian_diet WHERE prey_family LIKE "%${input}%"
+            SELECT DISTINCT prey_family AS name FROM avian_diet WHERE prey_family LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_genus AS name FROM avian_diet WHERE prey_genus LIKE "%${input}%"
+            SELECT DISTINCT prey_genus AS name FROM avian_diet WHERE prey_genus LIKE "${input}%"
             UNION
-            SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%"
+            SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "${input}%"
             UNION
             SELECT DISTINCT c.common_name AS name FROM avian_diet a, common_names c
-            WHERE c.taxon IN(a.prey_kingdom, a.prey_phylum, a.prey_class, a.prey_order, a.prey_suborder, a.prey_family, a.prey_genus, a.prey_scientific_name) AND c.common_name LIKE "%${input}%"
+            WHERE c.taxon IN(a.prey_kingdom, a.prey_phylum, a.prey_class, a.prey_order, a.prey_suborder, a.prey_family, a.prey_genus, a.prey_scientific_name) AND c.common_name LIKE "${input}%"
             ) combinedResult
         WHERE name != "Unknown"
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC LIMIT 10
