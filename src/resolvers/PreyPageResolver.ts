@@ -1,5 +1,6 @@
 import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
+import { CommonNames } from "../entities/CommonNames";
 import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager, SelectQueryBuilder } from "typeorm";
@@ -56,6 +57,17 @@ export class Predator {
 export class PreyPageResolver {
     @Query(() => [Predator])
     async getPredatorOf(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {
+        // Checks to see if the preyName given is a common name
+        const matchCommonToTaxon = await getManager()
+            .createQueryBuilder()
+            .select("taxon")
+            .from(CommonNames, "common_names")
+            .where("common_name = :name", { name: preyName })
+            .getRawOne();
+        // If a mapping exists, set to taxon to be queried properly later
+        if (matchCommonToTaxon !== undefined) {
+            preyName = matchCommonToTaxon["taxon"];
+        }
         let qbInitial = getManager()
             .createQueryBuilder()
             .select("common_name, family, diet_type, source, IF(diet_type = \"Occurrence\", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet")
@@ -78,6 +90,7 @@ export class PreyPageResolver {
     async getAutocompletePrey(
         @Arg("input") input: string
     ) {
+        // Last query in union list allows users to look up prey via common name. The query ensures the common name has a match in the database.
         const query = `
         SELECT DISTINCT name FROM
             (SELECT DISTINCT prey_kingdom AS name FROM avian_diet WHERE prey_kingdom LIKE "%${input}%"
@@ -94,7 +107,11 @@ export class PreyPageResolver {
             UNION
             SELECT DISTINCT prey_genus AS name FROM avian_diet WHERE prey_genus LIKE "%${input}%"
             UNION
-            SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%") combinedResult
+            SELECT DISTINCT prey_scientific_name AS name FROM avian_diet WHERE prey_scientific_name LIKE "%${input}%"
+            UNION
+            SELECT DISTINCT c.common_name AS name FROM avian_diet a, common_names c
+            WHERE c.taxon IN(a.prey_kingdom, a.prey_phylum, a.prey_class, a.prey_order, a.prey_suborder, a.prey_family, a.prey_genus, a.prey_scientific_name) AND c.common_name LIKE "%${input}%"
+            ) combinedResult
         WHERE name != "Unknown"
         ORDER BY LENGTH(name) - LENGTH("${input}") ASC LIMIT 10
         `;
