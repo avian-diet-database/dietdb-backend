@@ -13,7 +13,6 @@ class GetPredatorOfArgs {
     preyName: string;
 
     @Field({ defaultValue: "any" })
-    @IsIn(["any", "larva", "pupa", "adult"])
     preyStage: string;
 
     // TODO: Remove this field, no longer used
@@ -155,14 +154,22 @@ export class PreyPageResolver {
             .where(preyFilter, { preyName: name })
             .andWhere("observation_year_end IS NOT NULL")
             .orderBy("endYear", "DESC");
+        const qbPreyStages = getManager()
+            .createQueryBuilder()
+            .select("DISTINCT prey_stage AS stage")
+            .from(AvianDiet, "avian")
+            .where(preyFilter, { preyName: name })
+            .andWhere("prey_stage IS NOT NULL AND prey_stage != 'unspecified'")
 
         const regionRawResult = await qbRegion.getRawMany();
         const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany(); 
         const startYearRawResult = await qbStartYear.getRawMany();
         const endYearRawResult = await qbEndYear.getRawMany(); 
+        const preyStagesRawResult = await qbPreyStages.getRawMany();
         let acceptableRegions = new Set();
         let startYearsList = [];
         let endYearsList = [];
+        let preyStagesList = new Set;
         let regionList = new Set();
         for (let item of acceptableRegionsRawResult) {
             acceptableRegions.add(item["region"]);
@@ -181,7 +188,13 @@ export class PreyPageResolver {
         for (let item of endYearRawResult) {
             endYearsList.push(item["endYear"]);
         }
-        return { regions: regionList, startYears: startYearsList, endYears: endYearsList };
+        for (let item of preyStagesRawResult) {
+            let stages = item["stage"].split(';');
+            for (let stage of stages) {
+                preyStagesList.add(stage);
+            }
+        }
+        return { regions: regionList, startYears: startYearsList, endYears: endYearsList, preyStages: preyStagesList };
     }
 
     @Query(() => StudiesAndRecordsCount)

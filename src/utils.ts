@@ -60,4 +60,7 @@ export class FilterValues {
 
     @Field(() => [String])
     endYears: string[];
+
+    @Field(() => [String])
+    preyStages: string[];
 }
