@@ -146,12 +146,6 @@ export class PreyPageResolver {
             .createQueryBuilder()
             .select("region_name AS region")
             .from(Regions, "regions");
-        let qbStartYear = getManager()
-            .createQueryBuilder()
-            .select("DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear")
-            .from(AvianDiet, "avian")
-            .where(preyFilter, { preyName: newName })
-            .andWhere("observation_year_end IS NOT NULL")
         let qbEndYear = getManager()
             .createQueryBuilder()
             .select("DISTINCT observation_year_end AS endYear")
@@ -169,13 +163,11 @@ export class PreyPageResolver {
         let preyStagesList = new Set;
         if (preyKingdom) {
             qbRegion = qbRegion.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
-            qbStartYear = qbStartYear.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
             qbEndYear = qbEndYear.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
             qbPreyStages = qbPreyStages.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
         }
         if (preyStage && preyStage !== "NA") {
                 qbRegion = qbRegion.andWhere("prey_stage LIKE :stage", { stage: preyStage });
-                qbStartYear = qbStartYear.andWhere("prey_stage LIKE :stage", { stage: preyStage });
                 qbEndYear = qbEndYear.andWhere("prey_stage LIKE :stage", { stage: preyStage });
                 preyStagesList.add(preyStage);
         } else {
@@ -190,10 +182,8 @@ export class PreyPageResolver {
 
         const regionRawResult = await qbRegion.getRawMany();
         const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany(); 
-        const startYearRawResult = await qbStartYear.orderBy("startYear", "ASC").getRawMany();
         const endYearRawResult = await qbEndYear.orderBy("endYear", "DESC").getRawMany(); 
         let acceptableRegions = new Set();
-        let startYearsList = [];
         let endYearsList = [];
         let regionList = new Set();
         for (let item of acceptableRegionsRawResult) {
@@ -207,13 +197,10 @@ export class PreyPageResolver {
                 }
             }
         }
-        for (let item of startYearRawResult) {
-            startYearsList.push(item["startYear"]);
-        }
         for (let item of endYearRawResult) {
             endYearsList.push(item["endYear"]);
         }
-        return { regions: regionList, startYears: startYearsList, endYears: endYearsList, preyStages: preyStagesList };
+        return { regions: regionList, startYears: endYearsList.slice().reverse(), endYears: endYearsList, preyStages: preyStagesList };
     }
 
     @Query(() => StudiesAndRecordsCount)
@@ -283,7 +270,7 @@ export class PreyPageResolver {
             }
         }
         if (startYear !== undefined) {
-            qb = qb.andWhere("avian.observation_year_begin >= :startYear", { startYear: startYear });
+            qb = qb.andWhere("avian.observation_year_end >= :startYear", { startYear: startYear });
         }
         if (endYear !== undefined) {
             qb = qb.andWhere("avian.observation_year_end <= :endYear", { endYear: endYear });
