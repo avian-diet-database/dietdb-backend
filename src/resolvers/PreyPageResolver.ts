@@ -1,6 +1,7 @@
 import { IsIn } from "class-validator";
 import { AvianDiet } from "../entities/AvianDiet";
 import { CommonNames } from "../entities/CommonNames";
+import { PreyNames } from "../entities/PreyNames";
 import { Regions } from "../entities/Regions";
 import { Arg, Args, ArgsType, Field, ObjectType, Query, Resolver } from "type-graphql";
 import { getManager, SelectQueryBuilder } from "typeorm";
@@ -54,15 +55,42 @@ export class Predator {
 
 @Resolver()
 export class PreyPageResolver {
+    // Returns original name if not a mapped common name
+    static async checkIfCommon(preyName: string) {
+        const checkIfCommon = await getManager()
+            .createQueryBuilder()
+            .select("is_common_name")
+            .from(PreyNames, "prey_names")
+            .where("name = :name", { name: preyName })
+            .getRawOne();
+        if (checkIfCommon['is_common_name']) {
+            const additionalInfo = await getManager()
+                .createQueryBuilder()
+                .select("taxon, prey_kingdom, prey_stage")
+                .from(CommonNames, "common_names")
+                .where("common_name = :input", { input: preyName })
+                .getRawOne();
+            preyName = additionalInfo['taxon'];
+            let preyKingdom = additionalInfo['prey_kingdom'];
+            let preyStage = additionalInfo['prey_stage'];
+            return { name: preyName, kingdom: preyKingdom, stage: preyStage };
+        }
+        return { name: preyName };
+    }
     @Query(() => [Predator])
     async getPredatorOf(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {
-        preyName = await PreyPageResolver.getTaxonGivenCommonName(preyName);
+        let { name: newName, kingdom: preyKingdom, stage: newStage } = await PreyPageResolver.checkIfCommon(preyName);
+        preyStage = newStage && newStage !== "NA" ? newStage : preyStage;
+
         let qbInitial = getManager()
             .createQueryBuilder()
             .select("common_name, family, diet_type, source, IF(diet_type = \"Occurrence\", MAX(fraction_diet), SUM(fraction_diet)) AS fraction_diet")
             .from(AvianDiet, "avian");
-        qbInitial = PreyPageResolver.addArgConditions(qbInitial, preyName, preyStage, season, region, startYear, endYear)
-            .groupBy("source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites");
+        qbInitial = PreyPageResolver.addArgConditions(qbInitial, newName, preyStage, season, region, startYear, endYear);
+        if (preyKingdom) {
+            qbInitial = qbInitial.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+        }
+        qbInitial = qbInitial.groupBy("source, common_name, subspecies, family, observation_year_begin, observation_month_begin, observation_year_end, observation_month_end, observation_season, analysis_number, bird_sample_size, habitat_type, location_region, location_specific, item_sample_size, diet_type, study_type, sites");
         
         const qbFinal = getManager()
             .createQueryBuilder()
@@ -97,7 +125,8 @@ export class PreyPageResolver {
     async getFilterValuesPrey(
         @Arg("name") name: string
     ) {
-        name = await PreyPageResolver.getTaxonGivenCommonName(name);
+        let { name: newName, kingdom: preyKingdom, stage: preyStage } = await PreyPageResolver.checkIfCommon(name);
+
         const preyFilter = `
             (prey_kingdom = :preyName OR
             prey_phylum = :preyName OR
@@ -108,45 +137,64 @@ export class PreyPageResolver {
             prey_genus = :preyName OR
             prey_scientific_name = :preyName)
         `;
-        const qbRegion = getManager()
+        let qbRegion = getManager()
             .createQueryBuilder()
             .select("DISTINCT location_region AS region")
             .from(AvianDiet, "avian")
-            .where(preyFilter, { preyName: name });
-        const qbAcceptableRegions = getManager()
+            .where(preyFilter, { preyName: newName });
+        let qbAcceptableRegions = getManager()
             .createQueryBuilder()
             .select("region_name AS region")
             .from(Regions, "regions");
-        const qbStartYear = getManager()
+        let qbStartYear = getManager()
             .createQueryBuilder()
             .select("DISTINCT IFNULL(observation_year_begin, observation_year_end) AS startYear")
             .from(AvianDiet, "avian")
-            .where(preyFilter, { preyName: name })
+            .where(preyFilter, { preyName: newName })
             .andWhere("observation_year_end IS NOT NULL")
-            .orderBy("startYear", "ASC");
-        const qbEndYear = getManager()
+        let qbEndYear = getManager()
             .createQueryBuilder()
             .select("DISTINCT observation_year_end AS endYear")
             .from(AvianDiet, "avian")
-            .where(preyFilter, { preyName: name })
+            .where(preyFilter, { preyName: newName })
             .andWhere("observation_year_end IS NOT NULL")
-            .orderBy("endYear", "DESC");
-        const qbPreyStages = getManager()
+        let qbPreyStages = getManager()
             .createQueryBuilder()
             .select("DISTINCT prey_stage AS stage")
             .from(AvianDiet, "avian")
-            .where(preyFilter, { preyName: name })
-            .andWhere("prey_stage IS NOT NULL AND prey_stage != 'unspecified'")
+            .where(preyFilter, { preyName: newName })
+            .andWhere("prey_stage IS NOT NULL AND prey_stage != 'unspecified'");
+
+        // Probably a way smarter way to do this
+        let preyStagesList = new Set;
+        if (preyKingdom) {
+            qbRegion = qbRegion.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+            qbStartYear = qbStartYear.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+            qbEndYear = qbEndYear.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+            qbPreyStages = qbPreyStages.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+        }
+        if (preyStage && preyStage !== "NA") {
+                qbRegion = qbRegion.andWhere("prey_stage LIKE :stage", { stage: preyStage });
+                qbStartYear = qbStartYear.andWhere("prey_stage LIKE :stage", { stage: preyStage });
+                qbEndYear = qbEndYear.andWhere("prey_stage LIKE :stage", { stage: preyStage });
+                preyStagesList.add(preyStage);
+        } else {
+            const preyStagesRawResult = await qbPreyStages.getRawMany();
+            for (let item of preyStagesRawResult) {
+                let stages = item["stage"].split(';');
+                for (let stage of stages) {
+                    preyStagesList.add(stage);
+                }
+            }
+        }
 
         const regionRawResult = await qbRegion.getRawMany();
         const acceptableRegionsRawResult = await qbAcceptableRegions.getRawMany(); 
-        const startYearRawResult = await qbStartYear.getRawMany();
-        const endYearRawResult = await qbEndYear.getRawMany(); 
-        const preyStagesRawResult = await qbPreyStages.getRawMany();
+        const startYearRawResult = await qbStartYear.orderBy("startYear", "ASC").getRawMany();
+        const endYearRawResult = await qbEndYear.orderBy("endYear", "DESC").getRawMany(); 
         let acceptableRegions = new Set();
         let startYearsList = [];
         let endYearsList = [];
-        let preyStagesList = new Set;
         let regionList = new Set();
         for (let item of acceptableRegionsRawResult) {
             acceptableRegions.add(item["region"]);
@@ -165,12 +213,6 @@ export class PreyPageResolver {
         for (let item of endYearRawResult) {
             endYearsList.push(item["endYear"]);
         }
-        for (let item of preyStagesRawResult) {
-            let stages = item["stage"].split(';');
-            for (let stage of stages) {
-                preyStagesList.add(stage);
-            }
-        }
         return { regions: regionList, startYears: startYearsList, endYears: endYearsList, preyStages: preyStagesList };
     }
 
@@ -178,8 +220,8 @@ export class PreyPageResolver {
     async getNumRecordsAndStudiesPrey(
         @Arg("name") name: string
     ) {
-        name = await PreyPageResolver.getTaxonGivenCommonName(name);
-        const qb = getManager()
+        let { name: newName, kingdom: preyKingdom, stage: preyStage } = await PreyPageResolver.checkIfCommon(name);
+        let qb = getManager()
             .createQueryBuilder()
             .select("COUNT(*) as numRecords, COUNT(DISTINCT source) AS numStudies")
             .from(AvianDiet, "avian")
@@ -192,7 +234,13 @@ export class PreyPageResolver {
                 prey_family = :preyName OR
                 prey_genus = :preyName OR
                 prey_scientific_name = :preyName
-            `, { preyName: name });
+            `, { preyName: newName });
+        if (preyKingdom) {
+            qb = qb.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+        }
+        if (preyStage && preyStage !== "NA") {
+            qb = qb.andWhere("prey_stage LIKE :stage", { stage: "%" +  preyStage + "%" });
+        }
 
         const rawResult = await qb.getRawMany();
         return {
@@ -204,12 +252,17 @@ export class PreyPageResolver {
     // Assumes sources will never be empty/null in database
     @Query(() => [String])
     async getPredatorOfSources(@Args() {preyName, preyStage, startYear, endYear, season, region}: GetPredatorOfArgs) {            
-        preyName = await PreyPageResolver.getTaxonGivenCommonName(preyName);
+        let { name: newName, kingdom: preyKingdom, stage: newStage } = await PreyPageResolver.checkIfCommon(preyName);
+        preyStage = newStage && newStage !== "NA" ? newStage : preyStage;
+
         let qb = getManager()
             .createQueryBuilder()
             .select("DISTINCT source")
             .from(AvianDiet, "avian");
-        qb = PreyPageResolver.addArgConditions(qb, preyName, preyStage, season, region, startYear, endYear);
+        qb = PreyPageResolver.addArgConditions(qb, newName, preyStage, season, region, startYear, endYear);
+        if (preyKingdom) {
+            qb = qb.andWhere("prey_kingdom = :kingdom", { kingdom: preyKingdom });
+        }
 
         const rawResult = await qb.getRawMany();
         let sourceList = [];
@@ -222,12 +275,11 @@ export class PreyPageResolver {
     // Assumes AvianDiet alias is avian
     static addArgConditions(qb: SelectQueryBuilder<any>, preyName: string, preyStage: string, season: string, region: string, startYear?: string, endYear?: string) {
         qb = qb.where("(prey_kingdom = :name OR prey_phylum = :name OR prey_class = :name OR prey_order = :name OR prey_suborder = :name OR prey_family = :name OR prey_genus = :name OR prey_scientific_name = :name)", { name: preyName });
-
         if (preyStage !== "any") {
             if (preyStage === "adult") {
-                qb = qb.andWhere("(avian.prey_stage = :stage OR avian.prey_stage IS NULL)", { stage: preyStage })
+                qb = qb.andWhere("(avian.prey_stage LIKE :stage OR avian.prey_stage IS NULL)", { stage: "%" + preyStage + "%" })
             } else {
-                qb = qb.andWhere("avian.prey_stage = :stage", { stage: preyStage })
+                qb = qb.andWhere("avian.prey_stage LIKE :stage", { stage: "%" + preyStage + "%" })
             }
         }
         if (startYear !== undefined) {
@@ -243,20 +295,5 @@ export class PreyPageResolver {
             qb = qb.andWhere("avian.location_region LIKE :region", { region: "%" + region + "%" });
         }
         return qb;
-    }
-
-    static async getTaxonGivenCommonName(name: string) {
-        // Checks to see if the preyName given is a common name
-        const matchCommonToTaxon = await getManager()
-            .createQueryBuilder()
-            .select("taxon")
-            .from(CommonNames, "common_names")
-            .where("common_name = :input", { input: name })
-            .getRawOne();
-        // If a mapping exists, return mapped taxon
-        if (matchCommonToTaxon !== undefined) {
-            return matchCommonToTaxon["taxon"];
-        }
-        return name;
     }
 }
