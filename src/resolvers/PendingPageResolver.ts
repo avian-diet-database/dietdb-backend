@@ -33,16 +33,17 @@ class PendingDietInput {
 @Resolver()
 export class PendingPageResolver {
     @Query(() => [AvianDietPending])
-async getPendingDiet() {
-    return AvianDietPending.find();
+    async getPendingDiet() {
+        return AvianDietPending.find();
     }
 
-    @Mutation(() => Boolean) 
+    @Mutation(() => AvianDietPending) 
     async createPendingDiet(@Arg("input", () => PendingDietInput) input: PendingDietInput) {
-        await AvianDietPending.insert(input);
-        return true;
+        const pendingDiet = await AvianDietPending.create(input).save();
+        return pendingDiet;
     }
 
+    //Upon failure an error array describing the issue will be returned.
     @Mutation(() => Boolean) 
     async createMainDiet(@Arg("input", () => PendingDietInput) input: PendingDietInput) {
         await AvianDiet.insert(input);
