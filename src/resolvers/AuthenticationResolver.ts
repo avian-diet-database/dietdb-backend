@@ -1,5 +1,14 @@
-import {Query, Resolver, Mutation,Arg } from "type-graphql";
+import {Query, Resolver, Mutation,Arg, ArgsType, Field, Args } from "type-graphql";
 import { AuthenticationInfo } from "../entities/AuthenticationInfo";
+
+@ArgsType()
+class GetUserByLoginArgs {
+    @Field()
+    email: string;
+
+    @Field()
+    password: string;
+}
 
 @Resolver()
 export class AuthenticationResolver {
@@ -8,12 +17,12 @@ export class AuthenticationResolver {
         return AuthenticationInfo.find();
     }
 
-    @Query(() => [AuthenticationInfo])
-    async getUserByLogin(email: String, password: String) {
+    @Query(() => AuthenticationInfo)
+    async getUserByLogin(@Args() {email, password}: GetUserByLoginArgs) {
         return AuthenticationInfo.findOneOrFail({ where: { email:email, password:password }});
     }
 
-    @Mutation(() => AuthenticationInfo)
+    @Mutation(() => Boolean)
     async createUser(
         @Arg("full_name", () => String) full_name: string,
         @Arg("username", () => String) username: string,
@@ -23,9 +32,9 @@ export class AuthenticationResolver {
         @Arg("isVerified", () => String) isVerified: string,
         @Arg("isAdmin", () => String) isAdmin: string,
         ) {
-            const newUser = await AuthenticationInfo.insert({full_name,username,email,password,adminPassword,isVerified,
+            await AuthenticationInfo.insert({full_name,username,email,password,adminPassword,isVerified,
                 isAdmin})
-            return newUser;
+            return true;
         }
 }
 
