@@ -1,5 +1,5 @@
 import {Query, Resolver, Mutation,Arg } from "type-graphql";
-import { AuthenticationInfo } from "src/entities/AuthenticationInfo";
+import { AuthenticationInfo } from "../entities/AuthenticationInfo";
 
 @Resolver()
 export class AuthenticationResolver {
