@@ -177,59 +177,59 @@ export class AvianDietPending extends BaseEntity {
     source: string;
 
     //Spring 2021 additional columns
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     doi: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     species: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     new_species: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     country: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     state_province: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     location_other: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     lat_long_yn: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     elevation_yn: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     sex_yn: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     sex: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     age_class: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     study_location: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     table_fig_number: string;
 
-    @Field()
+    @Field({ nullable: true })
     @Column({ nullable: true })
     all_prey_diet_yn: string;
 
