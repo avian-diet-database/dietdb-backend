@@ -25,13 +25,13 @@ export class AuthenticationInfo extends BaseEntity {
 
     @Field()
     @Column()
-    adminPassword: string;
+    admin_password: string;
 
     @Field()
     @Column()
-    isVerified: string;
+    is_verified: string;
 
     @Field()
     @Column()
-    isAdmin: string;
+    is_admin: string;
 }

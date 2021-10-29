@@ -28,12 +28,12 @@ export class AuthenticationResolver {
         @Arg("username", () => String) username: string,
         @Arg("email", () => String) email: string,
         @Arg("password", () => String) password: string,
-        @Arg("adminPassword", () => String) adminPassword: string,
-        @Arg("isVerified", () => String) isVerified: string,
-        @Arg("isAdmin", () => String) isAdmin: string,
+        @Arg("admin_password", () => String) admin_password: string,
+        @Arg("is_verified", () => String) is_verified: string,
+        @Arg("is_admin", () => String) is_admin: string,
         ) {
-            await AuthenticationInfo.insert({full_name,username,email,password,adminPassword,isVerified,
-                isAdmin})
+            await AuthenticationInfo.insert({full_name,username,email,password,admin_password,is_verified,
+                is_admin})
             return true;
         }
 }
