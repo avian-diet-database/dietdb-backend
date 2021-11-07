@@ -1,5 +1,5 @@
 import {request} from 'graphql-request'
-import { createConnection, getManager} from 'typeorm';
+import {createConnection, getManager} from 'typeorm';
 import { AvianDietPending } from '../entities/AvianDietPending';
 
 const common_name = "common_name_test";
@@ -28,5 +28,5 @@ const getPendingDietQuery =
         const users = await AvianDietPending.find({where: {common_name: "common_name_test", source: "source_test",subspecies: "subspecies_test", taxonomy: "taxonomy_test",location_region: "location_region_test", location_specific: "location_specific_test", prey_kingdom: "prey_kingdom_test", diet_type: "diet_type_test"}});
         expect(users).toHaveLength(1);
         const entityManager = getManager();
-        entityManager.query(`DELETE FROM avian_diet_pending WHERE common_name = "common_name_test" AND source = "source_test" AND location_specific = "location_specific_test"`);
+        await entityManager.query(`DELETE FROM avian_diet_pending WHERE common_name = "common_name_test" AND source = "source_test" AND location_specific = "location_specific_test"`);
     })

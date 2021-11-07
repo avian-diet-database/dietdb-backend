@@ -1,5 +1,5 @@
 import {request} from 'graphql-request'
-import { createConnection, getManager } from 'typeorm';
+import {createConnection, getManager } from 'typeorm';
 import { AuthenticationInfo } from '../entities/AuthenticationInfo';
 
 const full_name = "full_name_test";
@@ -35,6 +35,6 @@ test("Get User by login", async () => {
     const response = await request('http://localhost:4000/graphql',getUserByLogin);
     expect(response).toEqual({"getUserByLogin": {"admin_password": "admin_password_test", "email": "test@test.com", "full_name": "full_name_test", "is_admin": "is_admin_test", "is_verified": "is_verified_test", "password": "password_test", "username": "username_test"}});
     const entityManager = getManager();
-    entityManager.query(`DELETE FROM authentication_info WHERE full_name = "full_name_test" AND email = "test@test.com"`);
+    await entityManager.query(`DELETE FROM authentication_info WHERE full_name = "full_name_test" AND email = "test@test.com"`);
 })
 

@@ -8,22 +8,28 @@
     "startJS": "node dist/index.js",
     "devTS": "nodemon --exec ts-node src/index.ts",
     "db:setup": "node dist/tst/tst-utils/setup.js",
-    "test": "npm run db:setup && jest",
+    "test": "jest",
     "startTS": "ts-node src/index.ts",
     "watch": "tsc -w",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "jest": {
-    "testMatch": [
-      "**/?(*.)+(spec|test).[j]s?(x)"
-    ],
-    "collectCoverageFrom": [
-      "dist/**/*.js"
+    "testURL": "http://localhost:4000/graphql",
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/_test_/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
     ],
     "collectCoverage": true,
-    "verbose": true,
-    "testTimeout": 30000
+    "verbose": true
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -40,7 +46,7 @@
     "typeorm": "^0.2.25"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.15",
+    "@types/jest": "^26.4.24",
     "@types/node": "^14.6.2",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^2.34.0",
@@ -52,8 +58,10 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^2.5.1",
-    "jest": "^26.6.2",
+    "graphql-request": "^3.6.1",
+    "jest": "^26.4.2",
     "nodemon": "^2.0.4",
+    "ts-jest": "^26.4.2",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
   }
