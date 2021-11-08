@@ -2,12 +2,9 @@ import {Query, Resolver, Mutation,Arg, ArgsType, Field, Args } from "type-graphq
 import { AuthenticationInfo } from "../entities/AuthenticationInfo";
 
 @ArgsType()
-class GetUserByLoginArgs {
+class GetUserByEmailArgs {
     @Field()
     email: string;
-
-    @Field()
-    password: string;
 }
 
 @Resolver()
@@ -18,8 +15,8 @@ export class AuthenticationResolver {
     }
 
     @Query(() => AuthenticationInfo)
-    async getUserByLogin(@Args() {email, password}: GetUserByLoginArgs) {
-        return AuthenticationInfo.findOneOrFail({ where: { email:email, password:password }});
+    async getUserByEmail(@Args() {email}: GetUserByEmailArgs) {
+        return AuthenticationInfo.findOneOrFail({ where: { email:email }});
     }
 
     @Mutation(() => Boolean)
