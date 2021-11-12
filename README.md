@@ -88,7 +88,8 @@ There is currently no automated testing during.
 - Jest
 - MySQL
 
-Project ADR under (ADR.md)[https://github.com/avian-diet-database/dietdb-backend/blob/master/ADR.md] in project root directory.
+Project ADR for Fall 2020 under (ADR.md)[https://github.com/avian-diet-database/dietdb-backend/blob/master/ADR.md] in project root directory.
+Project ADR for Fall 2021 under (ADR-fa2021.md)[https://github.com/avian-diet-database/dietdb-backend/blob/master/ADR-fa2021.md] in project root directory.
 
 # Contributing
 Please contact https://bio.unc.edu/faculty-profile/hurlbert/ before attempting to contribute
@@ -118,3 +119,4 @@ MIT License
 - **Jacob Yackenovich** @IBM for mentoring our team and providing guidance far and above just project direction.
 - The team collecting data for https://github.com/ahhurlbert/aviandietdb, which is the basis of our project.
 - **Prof. Jeff Terrell** @UNC for teaching and leading COMP 523, Software Engineering Lab.
+- **Derek Chadwell** for mentoring our team during Fall 2021, and sharing his knowledge of best practices in the industry
