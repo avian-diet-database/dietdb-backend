@@ -1,6 +1,7 @@
 # Avian Diet Database Backend
-A GraphQL server for serving data to the Avian Diet Database web page (frontend code located [here](https://github.com/avian-diet-database/dietdb-frontend) 
-Types of data served includes:
+A GraphQL server for serving data to the Avian Diet Database web page (frontend code located [here](https://github.com/avian-diet-database/dietdb-frontend) and submitting data to the database itself.
+
+Types of data served/submitted includes:
 - Diet breakdown for specific birds
 - Predator breakdown for specific bird prey
 - Data for graphs on web page
@@ -61,7 +62,7 @@ Start a tsc server which watches the src folder and compiles to the dist folder.
 
 ## Warranty
 
-Instructions above last tested and verified to work by https://github.com/Thomas-Le on November 11, 2020 on Windows 10
+Instructions above last tested and verified to work by https://github.com/pichhim on November 12, 2021 on Windows 10
 
 # Testing
 To run testing suite, run the following command within the project directory:
@@ -96,14 +97,18 @@ After gaining permission, will need to be added to https://github.com/avian-diet
 
 Will also need access to project on https://cloudapps.unc.edu/ to view status of deployment or modify settings.
 
-For more information about the original team and project information, visit https://comp523fa2020.github.io/Overview/
+For more information about the original team and project information, visit https://comp523fa2020.github.io/Overview/. For information about the Fall 2021 team that worked on data submission features, visit https://tarheels.live/comp523project/.
 
 # Authors
 #### Frontend
 - https://github.com/muyanpan
 - https://github.com/TeddyRandby
+- https://github.com/eden0606
+- https://github.com/pichhim
 #### Backend
 - https://github.com/Thomas-Le
+- https://github.com/c2kle
+- https://github.com/pichhim
 
 # License
 MIT License
