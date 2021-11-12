@@ -1,5 +1,5 @@
 # Avian Diet Database Backend
-A GraphQL server for serving data to the Avian Diet Database web page (frontend code located [here](https://github.com/avian-diet-database/dietdb-frontend) and submitting data to the database itself.
+A GraphQL server for serving data to the Avian Diet Database web page (frontend code located [here](https://github.com/avian-diet-database/dietdb-frontend)) and submitting data to the database itself.
 
 Types of data served/submitted includes:
 - Diet breakdown for specific birds
