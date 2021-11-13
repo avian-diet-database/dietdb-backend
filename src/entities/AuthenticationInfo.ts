@@ -34,4 +34,8 @@ export class AuthenticationInfo extends BaseEntity {
     @Field()
     @Column()
     is_admin: string;
+
+    @Field()
+    @Column()
+    security_question: string;
 }
