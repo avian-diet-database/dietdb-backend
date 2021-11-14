@@ -130,4 +130,33 @@ export class AvianDiet extends BaseEntity {
 
     @Column({ length: 500 })
     source: string;
+
+    //Spring 2021 additional columns
+    @Column({ nullable: true })
+    doi: string;
+
+    @Column({ nullable: true })
+    sex: string;
+
+    @Column({ nullable: true })
+    age_class: string;
+
+    @Column({ nullable: true })
+    within_study_data_source: string;
+
+    @Column({ nullable: true })
+    table_fig_number: string;
+
+    @Column({ nullable: true })
+    title: string;
+
+    @Column({ nullable: true })
+    lastname_author: string;
+
+    @Column({ nullable: true })
+    year: number;
+
+    @Column({ nullable: true })
+    journal: string;
+
 }
