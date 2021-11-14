@@ -3,15 +3,15 @@ import { AvianDietPending } from "../entities/AvianDietPending";
 import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int } from "type-graphql";
 import { TaxonomySubset } from "../entities/TaxonomySubset";
 
-//non-nullable fields in db, once query is working for sure, we will prob make scientific_name non nullable in query : common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id
+//non-nullable fields in db: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
 //notes and source have length 500
 //int field types: observation_month_begin, observation_month_end, observation_year_begin, observation_year_end, item_sample_size, bird_sample_size, year, (auto-generated in DB) unique_id
 @ArgsType()
 class PendingDietArguments {
-    @Field()
+    @Field({ nullable: true })
     common_name: string;
 
-    @Field({ nullable: true })
+    @Field()
     scientific_name: string;
 
     @Field({ nullable: true })
@@ -196,7 +196,7 @@ export class PendingPageResolver {
 
 
     //we are using this function because it works with frontend but eww
-    //non-nullable fields in db, once query is working for sure, we will prob make scientific_name non nullable in query : common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id
+    //non-nullable fields in db, once query is working for sure, we will prob make scientific_name non nullable in query : common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
     @Mutation(() => Boolean)
     async createAlternativePendingDietFull(
 
