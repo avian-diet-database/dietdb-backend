@@ -1,6 +1,9 @@
 import { Field, ObjectType } from "type-graphql";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
+//non-nullable fields: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id
+//notes and source have length 500
+//int field types: observation_month_begin, observation_month_end, observation_year_begin, observation_year_end, item_sample_size, bird_sample_size, year, (auto-generated in DB) unique_id
 @ObjectType()
 @Entity()
 export class AvianDietPending extends BaseEntity {
@@ -183,38 +186,6 @@ export class AvianDietPending extends BaseEntity {
 
     @Field({ nullable: true })
     @Column({ nullable: true })
-    species: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    new_species: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    country: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    state_province: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    location_other: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    lat_long_yn: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    elevation_yn: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
-    sex_yn: string;
-
-    @Field({ nullable: true })
-    @Column({ nullable: true })
     sex: string;
 
     @Field({ nullable: true })
@@ -223,7 +194,7 @@ export class AvianDietPending extends BaseEntity {
 
     @Field({ nullable: true })
     @Column({ nullable: true })
-    study_location: string;
+    within_study_data_source: string;
 
     @Field({ nullable: true })
     @Column({ nullable: true })
@@ -231,5 +202,18 @@ export class AvianDietPending extends BaseEntity {
 
     @Field({ nullable: true })
     @Column({ nullable: true })
-    all_prey_diet_yn: string;
+    title: string;
+
+    @Field({ nullable: true })
+    @Column({ nullable: true })
+    lastname_author: string;
+
+    @Field({ nullable: true })
+    @Column({ nullable: true })
+    year: number;
+
+    @Field({ nullable: true })
+    @Column({ nullable: true })
+    journal: string;
+
 }
