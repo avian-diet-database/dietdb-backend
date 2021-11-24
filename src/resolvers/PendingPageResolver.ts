@@ -1,7 +1,9 @@
 import { AvianDietPending } from "../entities/AvianDietPending";
-//import { AvianDiet } from "../entities/AvianDiet";
+import { AvianDietApproved } from "../entities/AvianDietApproved";
+import { AvianDietApprovalHistory } from "../entities/AvianDietApprovalHistory";
 import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int } from "type-graphql";
 import { TaxonomySubset } from "../entities/TaxonomySubset";
+
 
 //non-nullable fields in db: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
 //notes and source have length 500
@@ -171,6 +173,12 @@ export class PendingPageResolver {
         return AvianDietPending.find();
     }
 
+    //could throw this query into a new resolver file
+    @Query(() => [AvianDietApprovalHistory])
+    async getApprovalHistory() {
+        return AvianDietApprovalHistory.find();
+    }
+
     @Mutation(() => Boolean)
     async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
         if (new_species) {
@@ -184,6 +192,21 @@ export class PendingPageResolver {
             await AvianDietPending.insert(inputs)
             return true
         }
+    }
+
+    @Mutation(() => Boolean)
+    async approvePendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
+        await AvianDietApproved.insert({...inputs,unique_id})
+        await AvianDietApprovalHistory.insert({...inputs,unique_id,approved})
+        await AvianDietPending.delete(unique_id)
+        return true
+    }
+
+    @Mutation(() => Boolean)
+    async denyPendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
+        await AvianDietApprovalHistory.insert({...inputs,unique_id,approved})
+        await AvianDietPending.delete(unique_id)
+        return true
     }
 
 
