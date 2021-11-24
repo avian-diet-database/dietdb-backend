@@ -3,6 +3,7 @@ import { AvianDietApproved } from "../entities/AvianDietApproved";
 import { AvianDietApprovalHistory } from "../entities/AvianDietApprovalHistory";
 import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int } from "type-graphql";
 import { TaxonomySubset } from "../entities/TaxonomySubset";
+import {Md5} from "ts-md5";
 
 
 //non-nullable fields in db: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
@@ -181,6 +182,23 @@ export class PendingPageResolver {
 
     @Mutation(() => Boolean)
     async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+
+        // group_by(Source, Common_Name, Subspecies, Observation_Year_Begin, Observation_Month_Begin, Observation_Year_End,
+        //     Observation_Month_End, Observation_Season, Analysis_Number (not going to include), Bird_Sample_Size, Habitat_type, Location_Region,
+        //     Location_Specific, Item_Sample_Size, Diet_Type, Study_Type, Sites)
+
+        let string_observation_year_begin = (inputs.observation_year_begin || 0).toString();
+        let string_observation_month_begin = (inputs.observation_month_begin || 0).toString();
+        let string_observation_year_end = (inputs.observation_year_end || 0).toString();
+        let string_observation_month_end = (inputs.observation_month_end || 0).toString();
+        let string_bird_sample_size = (inputs.bird_sample_size || 0).toString();
+        let string_item_sample_size = (inputs.item_sample_size || 0).toString();
+
+        inputs.analysis_number = Md5.hashStr(inputs.source.concat(inputs.common_name,inputs.subspecies,string_observation_year_begin,
+            string_observation_month_begin,string_observation_year_end,string_observation_month_end,inputs.observation_season,
+            string_bird_sample_size,inputs.habitat_type,inputs.location_region,inputs.location_specific,string_item_sample_size,
+            inputs.diet_type,inputs.study_type,inputs.sites))
+            
         if (new_species) {
             await AvianDietPending.insert(inputs)
             return true
