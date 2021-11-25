@@ -169,19 +169,8 @@ class PendingDietArguments {
 
 @Resolver()
 export class PendingPageResolver {
-    @Query(() => [AvianDietPending])
-    async getPendingDiet() {
-        return AvianDietPending.find();
-    }
 
-    //could throw this query into a new resolver file
-    @Query(() => [AvianDietApprovalHistory])
-    async getApprovalHistory() {
-        return AvianDietApprovalHistory.find();
-    }
-
-    @Mutation(() => Boolean)
-    async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+    async createAnalysisHash(inputs: PendingDietArguments ) {
 
         // group_by(Source, Common_Name, Subspecies, Observation_Year_Begin, Observation_Month_Begin, Observation_Year_End,
         //     Observation_Month_End, Observation_Season, Analysis_Number (not going to include), Bird_Sample_Size, Habitat_type, Location_Region,
@@ -197,8 +186,27 @@ export class PendingPageResolver {
         inputs.analysis_number = Md5.hashStr(inputs.source.concat(inputs.common_name,inputs.subspecies,string_observation_year_begin,
             string_observation_month_begin,string_observation_year_end,string_observation_month_end,inputs.observation_season,
             string_bird_sample_size,inputs.habitat_type,inputs.location_region,inputs.location_specific,string_item_sample_size,
-            inputs.diet_type,inputs.study_type,inputs.sites))
-            
+            inputs.diet_type,inputs.study_type,inputs.sites).toLowerCase())
+
+        return inputs.analysis_number
+    }
+
+    @Query(() => [AvianDietPending])
+    async getPendingDiet() {
+        return AvianDietPending.find();
+    }
+
+    //could throw this query into a new resolver file
+    @Query(() => [AvianDietApprovalHistory])
+    async getApprovalHistory() {
+        return AvianDietApprovalHistory.find();
+    }
+
+    @Mutation(() => Boolean)
+    async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+
+        inputs.analysis_number = await this.createAnalysisHash(inputs)
+
         if (new_species) {
             await AvianDietPending.insert(inputs)
             return true
