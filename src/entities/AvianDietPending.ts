@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, ObjectType, Int, Float } from "type-graphql";
 import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 //non-nullable fields: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id
@@ -63,19 +63,19 @@ export class AvianDietPending extends BaseEntity {
     @Column({ nullable: true })
     habitat_type: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     observation_month_begin: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     observation_month_end: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     observation_year_begin: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     observation_year_end: number;
 
@@ -151,11 +151,11 @@ export class AvianDietPending extends BaseEntity {
     @Column()
     diet_type: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     item_sample_size: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     bird_sample_size: number;
 
@@ -208,12 +208,20 @@ export class AvianDietPending extends BaseEntity {
     @Column({ nullable: true })
     lastname_author: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
     year: number;
 
     @Field({ nullable: true })
     @Column({ nullable: true })
     journal: string;
+
+    @Field({ nullable: true })
+    @Column({ nullable: true })
+    state: string;
+
+    @Field(() => Float,{ nullable: true })
+    @Column({ nullable: true })
+    total_percent_diet: number;
 
 }

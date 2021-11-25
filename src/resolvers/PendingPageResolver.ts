@@ -1,10 +1,9 @@
 import { AvianDietPending } from "../entities/AvianDietPending";
-import { AvianDietApproved } from "../entities/AvianDietApproved";
-import { AvianDietApprovalHistory } from "../entities/AvianDietApprovalHistory";
-import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int } from "type-graphql";
+// import { AvianDietApproved } from "../entities/AvianDietApproved";
+// import { AvianDietApprovalHistory } from "../entities/AvianDietApprovalHistory";
+import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int, Float } from "type-graphql";
 import { TaxonomySubset } from "../entities/TaxonomySubset";
-import {Md5} from "ts-md5";
-
+import { Md5 } from "ts-md5";
 
 //non-nullable fields in db: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
 //notes and source have length 500
@@ -50,16 +49,16 @@ class PendingDietArguments {
     @Field({ nullable: true })
     habitat_type: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     observation_month_begin: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     observation_month_end: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     observation_year_begin: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     observation_year_end: number;
 
     @Field({ nullable: true })
@@ -116,10 +115,10 @@ class PendingDietArguments {
     @Field()
     diet_type: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     item_sample_size: number;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     bird_sample_size: number;
 
     @Field({ nullable: true })
@@ -159,29 +158,21 @@ class PendingDietArguments {
     @Field({ nullable: true })
     lastname_author: string;
 
-    @Field({ nullable: true })
+    @Field(() => Int, { nullable: true })
     year: number;
 
     @Field({ nullable: true })
     journal: string;
+
+    @Field(() => Float, { nullable: true })
+    total_percent_diet: number;
 }
 
 
 @Resolver()
 export class PendingPageResolver {
-    @Query(() => [AvianDietPending])
-    async getPendingDiet() {
-        return AvianDietPending.find();
-    }
 
-    //could throw this query into a new resolver file
-    @Query(() => [AvianDietApprovalHistory])
-    async getApprovalHistory() {
-        return AvianDietApprovalHistory.find();
-    }
-
-    @Mutation(() => Boolean)
-    async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+    async createAnalysisHash(inputs: PendingDietArguments) {
 
         // group_by(Source, Common_Name, Subspecies, Observation_Year_Begin, Observation_Month_Begin, Observation_Year_End,
         //     Observation_Month_End, Observation_Season, Analysis_Number (not going to include), Bird_Sample_Size, Habitat_type, Location_Region,
@@ -194,41 +185,117 @@ export class PendingPageResolver {
         let string_bird_sample_size = (inputs.bird_sample_size || 0).toString();
         let string_item_sample_size = (inputs.item_sample_size || 0).toString();
 
-        inputs.analysis_number = Md5.hashStr(inputs.source.concat(inputs.common_name,inputs.subspecies,string_observation_year_begin,
-            string_observation_month_begin,string_observation_year_end,string_observation_month_end,inputs.observation_season,
-            string_bird_sample_size,inputs.habitat_type,inputs.location_region,inputs.location_specific,string_item_sample_size,
-            inputs.diet_type,inputs.study_type,inputs.sites))
-            
+        inputs.analysis_number = Md5.hashStr(inputs.source.concat(inputs.common_name, inputs.subspecies, string_observation_year_begin,
+            string_observation_month_begin, string_observation_year_end, string_observation_month_end, inputs.observation_season,
+            string_bird_sample_size, inputs.habitat_type, inputs.location_region, inputs.location_specific, string_item_sample_size,
+            inputs.diet_type, inputs.study_type, inputs.sites).toLowerCase())
+
+        return inputs.analysis_number
+    }
+
+
+    @Query(() => [AvianDietPending])
+    async getPendingDiet() {
+        return AvianDietPending.find({ where: { state: "pending" } });
+    }
+
+    @Query(() => [AvianDietPending])
+    async getApprovalHistory() {
+        return AvianDietPending.find({
+            where: [
+                { state: "approved"},
+                { state: "denied"},
+                { state: "approved/processed"}
+            ]
+        });
+    }
+
+    //one-table structure
+    @Mutation(() => Boolean)
+    async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+
+        inputs.analysis_number = await this.createAnalysisHash(inputs)
+        const state = { "state": "pending" }
+
         if (new_species) {
-            await AvianDietPending.insert(inputs)
+            await AvianDietPending.insert({ ...inputs, ...state })
             return true
         }
         else {
             const match_db = await TaxonomySubset.findOneOrFail({ select: ["primary_com_name", "family"], where: { sci_name: inputs.scientific_name } });
             inputs.common_name = match_db.primary_com_name;
             inputs.family = match_db.family;
-            await AvianDietPending.insert(inputs)
+            await AvianDietPending.insert({ ...inputs, ...state })
             return true
         }
     }
 
     @Mutation(() => Boolean)
-    async approvePendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
-        await AvianDietApproved.insert({...inputs,unique_id})
-        await AvianDietApprovalHistory.insert({...inputs,unique_id,approved})
-        await AvianDietPending.delete(unique_id)
+    async approvePendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number) {
+        const state = { "state": "approved" }
+        await AvianDietPending.update({ unique_id }, { ...inputs, ...state})
         return true
     }
 
     @Mutation(() => Boolean)
-    async denyPendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
-        await AvianDietApprovalHistory.insert({...inputs,unique_id,approved})
-        await AvianDietPending.delete(unique_id)
+    async denyPendingDiet(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number) {
+        const state = { "state": "denied" }
+        await AvianDietPending.update({ unique_id }, { ...inputs, ...state})
         return true
     }
 
 
 
+
+
+
+
+
+
+    //not one table structure
+    // @Mutation(() => Boolean)
+    // async createPendingDietNotOne(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
+
+    //     inputs.analysis_number = await this.createAnalysisHash(inputs)
+
+    //     if (new_species) {
+    //         await AvianDietPending.insert(inputs)
+    //         return true
+    //     }
+    //     else {
+    //         const match_db = await TaxonomySubset.findOneOrFail({ select: ["primary_com_name", "family"], where: { sci_name: inputs.scientific_name } });
+    //         inputs.common_name = match_db.primary_com_name;
+    //         inputs.family = match_db.family;
+    //         await AvianDietPending.insert(inputs)
+    //         return true
+    //     }
+    // }
+
+    // @Mutation(() => Boolean)
+    // async approvePendingDietNotOne(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
+    //     await AvianDietApproved.insert({ ...inputs, unique_id })
+    //     await AvianDietApprovalHistory.insert({ ...inputs, unique_id, approved })
+    //     await AvianDietPending.delete(unique_id)
+    //     return true
+    // }
+
+    // @Mutation(() => Boolean)
+    // async denyPendingDietNotOne(@Args() inputs: PendingDietArguments, @Arg("unique_id", () => Int) unique_id: number, @Arg("approved", () => Boolean) approved: boolean) {
+    //     await AvianDietApprovalHistory.insert({ ...inputs, unique_id, approved })
+    //     await AvianDietPending.delete(unique_id)
+    //     return true
+    // }
+
+    // //could throw this query into a new resolver file
+    // @Query(() => [AvianDietApprovalHistory])
+    // async getApprovalHistoryNotOne() {
+    //     return AvianDietApprovalHistory.find();
+    // }
+
+    // @Query(() => [AvianDietPending])
+    // async getPendingDietNotOne() {
+    //     return AvianDietPending.find();
+    // }
 
 
 
@@ -292,15 +359,18 @@ export class PendingPageResolver {
         @Arg("lastname_author", () => String, { nullable: true }) lastname_author: string,
         @Arg("year", () => Int, { nullable: true }) year: number,
         @Arg("journalr", () => String, { nullable: true }) journal: string,
-        @Arg("new_species", () => Boolean,) new_species: boolean
+        @Arg("new_species", () => Boolean,) new_species: boolean,
+        @Arg("total_percent_diet", () => Float, { nullable: true }) total_percent_diet: number
     ) {
+        
+        const state = { "state": "pending" }
         if (new_species) {
 
             await AvianDietPending.insert({
                 common_name, scientific_name, subspecies, family, taxonomy, longitude_dd, latitude_dd, altitude_min_m, altitude_max_m, altitude_mean_m, location_region, location_specific, habitat_type,
                 observation_month_begin, observation_month_end, observation_year_begin, observation_year_end, observation_season, analysis_number, prey_kingdom, prey_phylum, prey_class, prey_order, prey_suborder, prey_family, prey_genus,
                 prey_scientific_name, inclusive_prey_taxon, prey_name_ITIS_ID, prey_name_status, prey_stage, prey_part, prey_common_name, fraction_diet, diet_type, item_sample_size, bird_sample_size, sites, study_type, notes, entered_by,
-                source, doi, sex, age_class, within_study_data_source, table_fig_number, title, lastname_author, year, journal
+                source, doi, sex, age_class, within_study_data_source, table_fig_number, title, lastname_author, year, journal, total_percent_diet,...state
             })
             return true;
 
@@ -313,7 +383,7 @@ export class PendingPageResolver {
                 common_name, scientific_name, subspecies, family, taxonomy, longitude_dd, latitude_dd, altitude_min_m, altitude_max_m, altitude_mean_m, location_region, location_specific, habitat_type,
                 observation_month_begin, observation_month_end, observation_year_begin, observation_year_end, observation_season, analysis_number, prey_kingdom, prey_phylum, prey_class, prey_order, prey_suborder, prey_family, prey_genus,
                 prey_scientific_name, inclusive_prey_taxon, prey_name_ITIS_ID, prey_name_status, prey_stage, prey_part, prey_common_name, fraction_diet, diet_type, item_sample_size, bird_sample_size, sites, study_type, notes, entered_by,
-                source, doi, sex, age_class, within_study_data_source, table_fig_number, title, lastname_author, year, journal
+                source, doi, sex, age_class, within_study_data_source, table_fig_number, title, lastname_author, year, journal,total_percent_diet,...state
             })
             return true;
 
@@ -335,33 +405,34 @@ export class PendingPageResolver {
         @Arg("prey_kingdom", () => String) prey_kingdom: string,
         @Arg("diet_type", () => String) diet_type: string,
     ) {
+        const state = {"state": "using temp"}
         await AvianDietPending.insert({
             common_name, source, subspecies, taxonomy, location_region, location_specific,
-            prey_kingdom, diet_type
+            prey_kingdom, diet_type,...state
         })
         return true;
     }
 
 
-//Tried to use input diet but object structure did not match with frontend, could try to use destructure syntax but went with argtypes instead
-// @InputType()
-// class PendingDietInput {
+    //Tried to use input diet but object structure did not match with frontend, could try to use destructure syntax but went with argtypes instead
+    // @InputType()
+    // class PendingDietInput {
 
-// }
+    // }
 
-//Also shows useing create and save to return what you inputted after insertion
-// @Mutation(() => AvianDietPending) 
-// async createPendingDiet(@Args() inputs: PendingDietArguments) {
-//        const pendingDiet = await AvianDietPending.create(inputs).save()
-//        return pendingDiet;
-// }
+    //Also shows useing create and save to return what you inputted after insertion
+    // @Mutation(() => AvianDietPending) 
+    // async createPendingDiet(@Args() inputs: PendingDietArguments) {
+    //        const pendingDiet = await AvianDietPending.create(inputs).save()
+    //        return pendingDiet;
+    // }
 
-// //Upon failure an error array describing the issue will be returned.
-// @Mutation(() => Boolean) 
-// async createMainDiet(@Arg("input", () => PendingDietInput) input: PendingDietInput) {
-//     await AvianDiet.insert(input);
-//     return true;
-// }
+    // //Upon failure an error array describing the issue will be returned.
+    // @Mutation(() => Boolean) 
+    // async createMainDiet(@Arg("input", () => PendingDietInput) input: PendingDietInput) {
+    //     await AvianDiet.insert(input);
+    //     return true;
+    // }
 
 }
 
