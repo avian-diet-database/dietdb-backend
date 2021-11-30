@@ -7,8 +7,7 @@ import { createSchema } from './utils/createSchema';
 const main = async () => {
     const app = express();
 
-    const conn = await createConnection();
-    conn.runMigrations();
+    await createConnection();
 
     const apolloServer = new ApolloServer({
         schema: await createSchema(),
