@@ -210,7 +210,7 @@ export class AvianDietPending extends BaseEntity {
 
     @Field(() => Int,{ nullable: true })
     @Column({ nullable: true })
-    year: number;
+    source_year: number;
 
     @Field({ nullable: true })
     @Column({ nullable: true })
