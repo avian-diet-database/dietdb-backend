@@ -157,7 +157,7 @@ class PendingDietArguments {
     lastname_author: string;
 
     @Field(() => Int, { nullable: true })
-    year: number;
+    source_year: number;
 
     @Field({ nullable: true })
     journal: string;
