@@ -154,7 +154,7 @@ export class AvianDiet extends BaseEntity {
     lastname_author: string;
 
     @Column({ nullable: true })
-    year: number;
+    source_year: number;
 
     @Column({ nullable: true })
     journal: string;
