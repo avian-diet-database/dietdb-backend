@@ -2,6 +2,7 @@ import { AvianDietPending } from "../entities/AvianDietPending";
 import { Field, Query, Resolver, Mutation, Arg, ArgsType, Args, Int, Float } from "type-graphql";
 import { TaxonomySubset } from "../entities/TaxonomySubset";
 import { Md5 } from "ts-md5";
+import { PreyNames } from "../entities/PreyNames";
 
 //non-nullable fields in db: common_name, location_region, prey_kingdom, diet_type, source, (auto-generated in DB) unique_id ****As of 11/14 we make scientific_name non nullable in query and common_name nullable
 //notes and source have length 500
@@ -208,6 +209,20 @@ export class PendingPageResolver {
         });
     }
 
+    @Query(() => [TaxonomySubset])
+    async getScientificNames() {
+        return TaxonomySubset.find({
+            select: ['sci_name']
+        })
+            
+    }
+
+    @Query(() => [PreyNames])
+    async getPreyNames() {
+        return PreyNames.find({
+            select: ['name']
+        })
+    }
     //one-table structure
     @Mutation(() => Boolean)
     async createPendingDiet(@Args() inputs: PendingDietArguments, @Arg("new_species", () => Boolean) new_species: boolean) {
